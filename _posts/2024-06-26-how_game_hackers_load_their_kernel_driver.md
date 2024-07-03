@@ -317,8 +317,9 @@ You have to adopt tricky method for your communication such as via:
 - Named pipes
 - Data ptr
 
-It's all require of practice and try-error process
+Besides that there're ingenius articles about [abusing large page](https://vollragm.github.io/posts/abusing-large-page-drivers/) and [bound hook](https://www.cyberark.com/resources/threat-research-blog/boundhook-exception-based-kernel-controlled-usermode-hooking) which also could be used.
 
+It's all require of practice and try-error process
 Hence, you have to learn, reverse engineer anti cheat and know what it's monitoring.
 
 ## Conclusion
