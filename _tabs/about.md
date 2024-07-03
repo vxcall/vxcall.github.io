@@ -12,15 +12,15 @@ I have been working as a web engineer in Tokyo since 2021. In my job, I have exp
 
 #### a reverse engineer
 
-I began exploring reverse engineering in 2020 as one of my hobbies, my first ever output is [a CSGO cheat](https://github.com/vxcall/Dainsleif). Since then, I have studied reverse engineering with IDA in earnest whenever I felt like it, tried cheat development in Rustlang, studied kernel driver development, etc. I'm still halfway through all of these, but I enjoy it as a casual hobby.
+I began exploring reverse engineering in 2020 as one of my hobbies, my first ever output is [a CSGO cheat](https://github.com/vxcall/Dainsleif). Since then, I've been  studying reverse engineering with IDA, tried cheat development in Rustlang, studied kernel driver development in earnest whenever I felt like it. I'm still halfway through all of these, but I enjoy it as a casual hobby.
 
 ## About this blog
 
-I would like to write an article on my development and experience in the context of reverse engineering. It will be treated as a kind of note for myself, but I hope it will be of use to someone else in case it is of interest.
+I would like to write articles on my development and experience in the context of reverse engineering. It will be treated as a kind of note for myself, but I hope it will be of use to someone else in case it is of interest.
 
 Here's a list of topics you might encounter in this blog:
 
-```md
+```
 Reverse engineering
 Deobfuscation and devirtualization
 Windows kernel driver development

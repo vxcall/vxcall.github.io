@@ -303,15 +303,23 @@ There you go! your driver will be mapped in your kernel!
 
 Well...unless you configure it well.
 
-The thing is anti cheats has suspicious drivers list and periodically check if known volunerable drivers have been loaded and `iqvw64e.sys` is one of them.
+The thing is anti cheats has suspicious drivers list and periodically check if known volunerable drivers have been loaded and `iqvw64e.sys` is one of them. Moreover windows has list of similar concept, you can disable by editing `VulnerableDriverBlocklistEnable` registry key.
 You have to exploit your own driver which is capable of read and write memory or some alternative APIs like MmMapIoSpace/MmUnmapIoSpace or ZwMapViewOfSection/ZwUnmapViewOfSection. This is called Bring Your Own Volunerable Driver, in short BYOVD lol.
 
 In case you are interested in, [loldrivers.io](https://www.loldrivers.io/) is a website you can find volunerable drivers at for example. Of course it's the best to have your own driver not disclosed publically tho.
 
 But most important and difficult part than BYOVD is **make your driver pretends like it's a legit driver**. If your driver behave bad, it will lead u banned. For example if you use normal communication method between user mode application and driver, it will be detected.
-Moreover using APIs like KeStackAttachProcess or setting NMI callbacks and stuff are all minitored so easily be flagged if you ever fuck up anything.
 
-Hence, you have to learn or reverse engineer anti cheat and know what it's monitoring.
+You have to adopt tricky method for your communication such as via:
+
+- Sockets
+- Shared memory
+- Named pipes
+- Data ptr
+
+It's all require of practice and try-error process
+
+Hence, you have to learn, reverse engineer anti cheat and know what it's monitoring.
 
 ## Conclusion
 
