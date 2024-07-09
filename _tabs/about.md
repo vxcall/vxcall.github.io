@@ -4,7 +4,7 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-Hi I'm vxcall, I'm a
+Hi I'm vxcall, I am a
 
 #### web engineer
 
