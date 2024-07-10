@@ -32,3 +32,6 @@ in `_sass/colors/typography-light.scss`
 
   dark theme
   https://github.com/vxcall/vxcall.github.io/commit/e36fe5d9ba0a3c8da979ca34a989ea3ce5a86cf2
+
+  light theme + dark style fix
+  https://github.com/vxcall/vxcall.github.io/commit/234e0e72348b3f0899ab3d12fb7875c24d5d8494
