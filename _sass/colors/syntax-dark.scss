@@ -4,7 +4,7 @@
 
 @mixin dark-syntax {
   --language-border-color: #2d2d2d;
-  --highlight-bg-color: #151515;
+  --highlight-bg-color: #272822;
   --highlighter-rouge-color: #c9def1;
   --highlight-lineno-color: #808080;
   --inline-code-bg: #323238;
@@ -21,8 +21,8 @@
 
   /* --- Syntax highlight theme from `rougify style base16.dark` you can get other css from http://jwarby.github.io/jekyll-pygments-themes/languages/java.html and paste them here --- */
 
-  .highlight pre { background-color: #151515; }
-  .highlight .hll { background-color: #151515; }
+  .highlight pre { background-color: #272822; }
+  .highlight .hll { background-color: #272822; }
   .highlight .c { color: #75715e } /* Comment */
   .highlight .err { color: #960050; background-color: #1e0010 } /* Error */
   .highlight .k { color: #66d9ef } /* Keyword */
