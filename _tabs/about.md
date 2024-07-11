@@ -30,3 +30,8 @@ Web development
 {: file='Things I find attractive'}
 
 Some of these are subjects I'm actively diving into, while others are still on my to-do list.
+
+## Contact
+
+Feel free to reach out to me on [discord](https://tinyurl.com/discord-vxcall) if you have questions or wanna have conversation.
+Please be informed that I have no intention of selling game cheats or tools. I'm just a FOSS enthusiast so.

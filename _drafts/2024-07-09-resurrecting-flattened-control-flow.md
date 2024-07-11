@@ -21,6 +21,7 @@ IMAGE
 
 - [Terms in this article](#terms-in-this-article)
 - [[+]Control Flow Flattening in detail](#-control-flow-flattening-in-detail)
+- [[+] About particular CFF I'm facing]()
 - [[+]a few potential approaches](#-a-few-potential-approaches)
 - [[+] Annihilating dispatcher routines and restoring original flow](#statically-distinguish-original-basic-blocks)
 - [statically distinguish original basic blocks](#use-symbolic-execution)
@@ -63,7 +64,17 @@ The dispatcher determines which block to execute next by evaluating the current 
 This flattened structure makes it challenging for reverse engineers to understand the program's logic and reconstruct its original flow.
 Instead of following a clear, linear path, they must navigate through a maze-like structure where the relationships between code blocks are not immediately apparent.
 
+## [+] About particular CFF I'm facing
+
+This flattened binary's dispatcher is not ending with conditional jump, but instead normal `jmp`.
+At each jmp, it's referencing what's called jump table to determine which basic block should it jmp to based on eax which made upon esi originally.
+
+Jump table refers to other memory place which holding sequence of addresses.
+And in this case jmp_table is holding jump table's base address, and because the pointer size is 4 bytes each in x86, `[eax*4]` effectively referencing corresponding address based on eax value.
+
 ## [+] a few potential approaches
+
+#### using IDA's Microcode API
 
 #### statically distinguish original basic blocks
 
