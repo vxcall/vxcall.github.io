@@ -109,8 +109,6 @@ fn rocket() -> _ {
 And here's my compose.yaml and Dockerfile.dev. If u think it looks overwhelming, don't worry there's same code in my GitHub so [refer to it](https://github.com/vxcall/dockerized-rust-hot-reload).
 
 ```yaml
-version: "3.8"
-
 services:
   server:
     container_name: server
@@ -167,6 +165,15 @@ COPY ./src ./src
 COPY Cargo.toml Cargo.lock ./
 ```
 {: file='Dockerfile.dev'}
+
+Lastly you have to add `.cargo/config.toml` at the root directory and put this in it to tell rust to use mold as a linker
+
+```toml
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/mold"]
+```
+{: file='.cargo/config.toml'}
 
 Everythings ready, now you run `docker compose up --build -d` and you have full-automated Rust development environment. When you change files under `src` directory the server will be reloaded. In this specific example, because it's tiny, it took 2 seconds to be hot-reloaded which would've taken 5 or 6 seconds normally with lld.
 ~~Only one drawback I would say is that it takes while to build the container when start up cuz it's building mold entirely from source code. I'm sure there's ways to lower the time tho.~~ I did a performance optimization, therefore it should be pretty quick.
