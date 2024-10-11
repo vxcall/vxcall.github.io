@@ -1,5 +1,5 @@
 ---
-title: Exploring the fundamentals of hacking Unity games
+title: Exploring the Fundamentals of Hacking Unity Games
 date: 2023-12-22 12:00:00 +0900
 categories: [reverse engineering, unity]
 tags: [csharp, cheat]

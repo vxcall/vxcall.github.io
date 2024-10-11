@@ -1,5 +1,5 @@
 ---
-title: How game cheaters install their illegal kernel driver?
+title: How Game Cheaters Install Their Illegal Kernel Driver?
 date: 2024-06-26 14:06:00 +0900
 categories: [kernel]
 tags: [cpp, kernel]     # TAG names should always be lowercase

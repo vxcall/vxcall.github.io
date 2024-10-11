@@ -1,5 +1,5 @@
 ---
-title: Invoking assembly functions from MSVC-compiled x64 C++ program
+title: Invoking Assembly Functions from MSVC-compiled x64 C++ Program
 date: 2023-12-06 14:06:00 +0900
 categories: [low level]
 tags: [cpp, asm]     # TAG names should always be lowercase

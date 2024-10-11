@@ -1,5 +1,5 @@
 ---
-title: "Hot reloading rust blazingly fast with Docker and Mold"
+title: "Hot Reloading Rust Blazingly Fast with Docker and Mold"
 date: 2024-01-22 14:06:00 +0900
 categories: [web, backend]
 tags: [docker, rust]

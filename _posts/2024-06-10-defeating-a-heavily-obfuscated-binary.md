@@ -1,5 +1,5 @@
 ---
-title: Defeating a heavily obfuscated keygenme binary
+title: Defeating a Heavily Obfuscated Keygenme Binary
 date: 2024-06-10 21:00:00 +0900
 categories: [reverse engineering, deobfuscation]
 tags: [asm, reverse-engineering, deobfuscation]
