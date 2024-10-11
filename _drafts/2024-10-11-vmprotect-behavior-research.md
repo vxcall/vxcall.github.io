@@ -19,6 +19,12 @@ A few weeks ago a friend of mine gave me a binary virtualized with latest VMProt
 > This article content might be too rudimentary for you if you are a skilled reverse engineer.
 {: .prompt-info }
 
-## What the hell is virtualization?
+## About virtualization
 
-Virtualization is a unique method used to secure and obfuscate code by transforming it into a custom bytecode that runs on a virtual machine (VM) embedded within the protected application. The virtual machine run in the application always has a proprietary architecture so the decompiler like IDA doesn't recognize the bytecode as neither instruction nor function but instead just a chunk of bytes.
+Virtualization is a unique method used to obfuscate code by transforming it into a custom bytecode that runs on a virtual machine (VM) embedded within the protected application. The virtual machine run in the application always has a proprietary architecture so the decompiler like IDA doesn't recognize the bytecode(original code) as neither instruction nor function but instead just a chunk of bytes.
+
+## What is VMProtect?
+
+VMProtect is one of the most famous (and infamous) protection software being developed by Russian firm, VMProtect Software. What it applies to software is not only virtualization but other obfuscation such as deadstores insertion, opaque predicates, indirect jmp, stack manipulation...you name it!
+
+VMProtect has been updated frequently and considering the latest version as of now is 3.9, version 3.8.1 (the one my binary was virtualized with) is pretty new I'd say.
