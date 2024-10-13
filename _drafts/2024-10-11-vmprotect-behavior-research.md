@@ -16,7 +16,7 @@ Virtualization is one of the most hard-to-break protection techniques employed w
 And I'm totally hooked on it because knowing vmprotect is getting paramount in 2024 to reverse engineer softwares with robust security like anti-cheat software.
 
 A couple of weeks ago, a friend of mine gave me a binary virtualized with VMProtect3.8.1 with 100% complexity + 10vm.
-Although I'm an absolute newbie in this field, I always wanted to know about virtualization technique I finally decided to tackle on it and write a diary about how I get rekt! 
+Although I'm an absolute newbie in this field, I always wanted to know about virtualization technique I finally decided to tackle on it and write a diary about how I get wrecked! lol
 
 In this blog post I'll write about what I saw and felt during analysis, it's neither something covers entire VMProtect's feature nor in-depth, but more like initial brief research. Cuz that'd be beyond my wheelhouse.
 
@@ -49,10 +49,11 @@ So this is what you should know before diving into the actual contents!
 ## The binary's behavior
 
 Knowing what the binary does is the most important thing to know when you reverse enginer software.
-This particular one is a vmp test sample, so it was as simple as just print out number `2` and pop up messagebox with a word "wait".
+So that you can presume for instance what kind of Windows API you would expect to be called or where to start.
+This particular one is a very simple vmp sample, so it was as straightforward as just print out number `2` and pop up a messagebox with a word "wait".
 
 ![binary_behavior](binary_behavior.png)
-_it's print out '2' and pop up message box_
+_it's print out '2' and pop up a message box_
 
 ## Let's get rect!
 
@@ -128,7 +129,7 @@ _getting a byte from vip and updating pointer_
 
 vmp stores opcode and oprand in bytecode field. So when it wants to execute `add eax, 5`, retrieve each opcode and operand just like I showed you, and execute it.
 
-> Note that VIP looks technically going backward just like stack, but apparently it varies depends on the vm you're looking at. some vm actually go forward and others go backward.
+> Note that VIP looks technically going backward just like stack does, but apparently it varies depending on the vm you're dealing with. Some vms actually go forward and others go backward.
 {: .prompt-tip }
 
 ## Deadstore removal plugin
@@ -137,10 +138,13 @@ The amount of deadstore vmp inserts between legit instructions are insane that I
 
 [vxcall/deadstore-remover](https://gist.github.com/vxcall/1b2841370d07f25dc0d729985306bf4f)
 
-Place it in IDA's plugins folder.
-It's utilizing a library called [triton](https://github.com/jonathansalwan/Triton), you have to build it in order to use my plugin.
-Also it works on IDA 8 but doesnt work on IDA 9 due to API compatibility.
+Place it in IDA's `plugins` folder.
+It's utilizing a library called [triton](https://github.com/jonathansalwan/Triton), therefore you have to build it to use my plugin.
+Also it works on IDA 8.X but doesnt work on IDA 9.X due to the API compatibility.
 You can use it by placing cursor on the middle of a function in IDA and run the plugin I named it "Function Deadstore remover", so that the plugin will analyze and nop out every garbage instructions.
+
+![deadstore-remover](deadstore_remover.png)
+_nop out deadstore, if the instruction made out of multipul bytes, it truncates them_
 
 ## Devirtualize it
 
