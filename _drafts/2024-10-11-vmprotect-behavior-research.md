@@ -20,7 +20,7 @@ Although I'm an absolute newbie in this field, I always wanted to know about vir
 
 In this blog post I'll write about what I saw and felt during analysis, it's neither something covers entire VMProtect's feature nor in-depth, but more like initial brief research. Cuz that'd be beyond my wheelhouse.
 
-> This article might be too rudimentary for those who ever dealt with VMProtect before.
+> This article might be too rudimentary for those who ever dealt with VMProtect before. Also there might be misunderstandings, forgive me I'm not a professional.
 {: .prompt-warning }
 
 ## About virtualization
@@ -63,7 +63,7 @@ Moreover my friend told me where the vm begins, people call it vm_entry, so so t
 But still, the binary is obfuscated with 100% complexity, it could be more and more complicated than what I expect of course.
 Don't worry it's gonna be totally fine, cuz we're here to get wrecked!
 
-## vm_entry
+## [+] vm_entry
 
 Right off the bat, look at the main function.
 
@@ -100,7 +100,7 @@ I commented in the picture why it'd always takes same branch.
 ![vm_entry2](vm_entry2.png)
 _where pushes registers in vm entry_
 
-## Locate VIP initialization
+## [+] Locate VIP initialization
 
 Many instructions in virtualized subroutine doesn't make sense to me and it confuses me at the same time. Idk what to look for and shit.
 However 1 thing I know was vmp must've stored custom bytecode for vm somewhere in the binary.
@@ -132,7 +132,7 @@ vmp stores opcode and oprand in bytecode field. So when it wants to execute `add
 > Note that VIP looks technically going backward just like stack does, but apparently it varies depending on the vm you're dealing with. Some vms actually go forward and others go backward.
 {: .prompt-tip }
 
-## Deadstore removal plugin
+## [+] Deadstore removal plugin
 
 The amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function. 
 
@@ -146,10 +146,10 @@ You can use it by placing cursor on the middle of a function in IDA and run the 
 ![deadstore-remover](deadstore_remover.png)
 _nop out deadstore, if the instruction made out of multipul bytes, it truncates them_
 
-## Devirtualize it
+## [+] Devirtualize it
 
 Enough research, it's time to devirtualize it.
-For it I used [NaC-L/Mergen](https://github.com/NaC-L/Mergen) which is a very cool tool that lifts obfuscated binary into LLVM IR[^llvm_ir]. It gets assembly as input and interprets each disassembly's semantics into LLVM IR using LLVM/IRBuilder.
+For it I used [NaC-L/Mergen](https://github.com/NaC-L/Mergen) which is a very cool tool to lift obfuscated binary into LLVM IR[^llvm_ir]. It gets assembly as input and interprets each disassembly's semantics into LLVM IR using LLVM/IRBuilder. Moreover, it utilizes LLVM's optimization feature to deobfuscate/devirtualize code.
 That way Mergen can universary handle not only VMProtect but other obfuscators and virtualizers.
 I found it so cool that I made a couple of small pull requests to contribute it! You have to check it out!
 
