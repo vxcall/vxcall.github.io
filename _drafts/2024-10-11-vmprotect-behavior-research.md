@@ -18,7 +18,7 @@ And I'm totally hooked on it because knowing vmprotect is getting paramount in 2
 A couple of weeks ago, a friend of mine gave me a binary virtualized with VMProtect3.8.1 with 100% complexity + 10vms.
 Although I'm an absolute newbie in this field, I always wanted to know about virtualization technique I finally decided to tackle on it and write a diary about how I get wrecked! lol
 
-In this blog post I'll write about what I saw and felt during analysis, it's neither something covers entire VMProtect's feature nor in-depth, but more like initial brief research. Cuz that'd be beyond my wheelhouse.
+In this blog post I'll write about what I saw and felt during analysis, it's neither something covers entire VMProtect's feature nor in-depth, but more like initial brief research to get used to it. Cuz that'd be beyond my wheelhouse.
 
 > This article might be too rudimentary for those who ever dealt with VMProtect before. Also there might be misunderstandings, forgive me I'm not a professional.
 {: .prompt-warning }
@@ -65,14 +65,20 @@ Don't worry it's gonna be totally fine, cuz we're here to get wrecked!
 
 ## [+] Disable ASLR
 
-I noticed that the binary was built with ASLR[^aslr] on, which makes ma unpleasant.
-So I first turned it off.
+I noticed that the binary was built with `/DYNAMICBASE` option, which enables ASLR[^aslr]
+It made me unpleasant in debugging session.
 
-It's pretty easy, open it with your favorite hex editor and navigate to `NTHeader` -> `OptionalHeader` -> `DllCharacteristics` -> `IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE` and set it to 0.
+It's pretty easy to turned it off, open the binary with your favorite hex editor and navigate to 
+
+```
+NTHeader -> OptionalHeader -> DllCharacteristics -> IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
+```
+
+and set it to 0.
 
 Then go to Windows security in windows settings and in `App & browser control` tab, turn off `Randomize memory allocations (Bottom up ASLR)`.
 
-That way you can turn off the ASLR and fix the image base across reboot I believe.
+That way you can turn off the ASLR and fix the image base across reboot.
 
 > also setting `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel\MitigationOptions`'s third significant bit to 0 does the same thing in registry.
 {: .prompt-tip }
@@ -85,7 +91,10 @@ Right off the bat, look at the main function.
 _main function_
 
 Right before going into vm_entry it's assigning value to the 3 registers.
-So far you can assume that they're used in vm_entry maybe? Keep it in mind anyway and carry on.
+It's not a deafult x64 __fastcall calling convension but come on it's VMProtect!
+It'd do anything dirty.
+you can assume that they could be used in vm_entry.
+Keep it in mind and carry on.
 
 ```nasm
 mov     r8d, 3
@@ -157,6 +166,130 @@ By doing this it's creating exclusive stack of size 0x260 while preserving curre
 
 ![virtual stack dbg](virtual_stack_dbg.png)
 
+## [+] VM handler
+
+This is the one unit of vm handler.
+Even tho it should be semantically one routine, it's chopped up to lots of basic blocks and it's using disgusting way to jmp around without executing whole subroutines it lands after each call/jmp.
+
+Since it's too complicated, I couldn't just take entire picture of them, I manually put them together to one code below so let's investigate it.
+
+```nasm
+0000000000044792        mov     eax, 21322628h
+0000000000044797        neg     rax
+000000000004479A        mov     r11, [rbx+rax*2+42644C50h]
+00000000000447A2        lea     r8, [rsp+rax*2+42644D10h]
+00000000000447AA        movzx   r9d, al
+00000000000447AE        lea     rbp, [rax+rax+750119A6h]
+00000000000447B6        mov     [rax+r8+21322628h], r11
+00000000000447BE        lea     r8, ds:0FFFFFFFF9E3824A7h[rbp*2]
+00000000000447C6        mov     rbp, [rbx+rax*2+42644C58h]
+00000000000447CE        jge     loc_C2AF1
+00000000000447D4        movsx   r11d, r8w
+00000000000447D8        lea     rcx, [rsp+rax*2+42644C60h]
+00000000000447E0        mov     [rcx+rax+21322628h], rbp
+00000000000447E8        call    sub_8695C
+
+000000000008695C        mov     r11, [rax+r10+21322620h]
+0000000000086964        movzx   ebp, ax
+0000000000086967        xor     r11, rdi
+000000000008696A        rol     r11, 1
+000000000008696D        push    rax
+000000000008696E        neg     [rsp+rax*2+8+arg_42644C43]
+0000000000086976        mov     [rsp+r9*2+8+var_1B8], 0B9884282h
+0000000000086982        not     r11
+0000000000086985        lea     r8, ds:0FFFFFFFFEABD1E31h[r9*4]
+000000000008698D        sal     ebp, 78h
+0000000000086990        call    sub_83C34
+
+0000000000083C34        bswap   r11
+0000000000083C37        xadd    bp, ax
+0000000000083C3B        rol     r11, 2
+0000000000083C3F        neg     r11
+0000000000083C42        mov     ecx, r8d
+0000000000083C45        rol     rbp, cl
+0000000000083C48        xor     rdi, r11
+0000000000083C4B        mov     [rsp+rax*2+arg_42660008], 0CBD428Eh
+0000000000083C57        mov     [rbx+rax*2+42660008h], r11
+0000000000083C5F        movsx   r11d, al
+0000000000083C63        dec     ebp
+0000000000083C65        pop     r9
+0000000000083C67        movzx   r8d, byte ptr [r10+rax+2132FFF7h]
+0000000000083C70        xor     [rsp+r11*8-8+arg_2], r11d
+0000000000083C75        jnb     loc_CBAC0
+
+00000000000CBAC0        xor     r8b, dil
+00000000000CBAC3        inc     rbp
+00000000000CBAC6        dec     r8b
+00000000000CBAC9        call    sub_9DCE3
+
+000000000009DCE3        xor     r11b, cl
+000000000009DCE6        call    sub_84C20
+
+0000000000084C20        ror     r8b, 1
+0000000000084C23        mov     r9d, 3C8CAD36h
+0000000000084C29        mov     edx, 3703F011h
+0000000000084C2E        not     r8b
+0000000000084C31        rol     r8b, 1
+0000000000084C34        dec     bpl
+0000000000084C37        setp    cl
+0000000000084C3A        pop     rcx                       ; rcx gets return address on top of the stack
+0000000000084C3B        add     rcx, 4ABEh                ; add constant offset to it
+0000000000084C42        jmp     rcx                       ; jmp
+
+00000000000A27A9        xor     dil, r8b
+00000000000A27AC        lea     r8, [rsp+r8+arg_10]
+00000000000A27B1        mov     rdx, [r8+rax+21330000h]
+00000000000A27B9        pop     rax                       ; rax gets return address 0xCBACE
+00000000000A27BA        add     rax, 0FFFFFFFFFFFBE97Eh   ; add constant offset to it
+00000000000A27C0        jmp     rax                       ; jmp
+
+000000000008A44C        lea     r8, [r11+r9-5DDEB1F0h]
+000000000008A454        mov     [rbx+r11*2-122h], rdx
+000000000008A45C        and     r8w, [rsp+r11-88h]
+000000000008A465        call    sub_B0A97
+
+00000000000B0A97        rol     [rsp+r11*2+var_116], 0ACh
+00000000000B0AA1        mov     eax, [r11+r10-9Eh]             ; rax populated with bytecode (r10 is vip reg)
+00000000000B0AA9        lea     rcx, ds:0FFFFFFFFFD9592B7h[r8*4]
+00000000000B0AB1        ror     r8w, 24h
+00000000000B0AB6        shr     r9w, 0C4h
+00000000000B0ABB        lea     r10, [r10+r11*2-12Fh]          ; vip is no longer used in this vm handler, thus it moves pointer forward
+00000000000B0AC3        xor     eax, edi                       ; rax decryption starts by xoring with rolling key (edi)
+00000000000B0AC5        movzx   edx, r11w
+00000000000B0AC9        shr     r11, 44h
+00000000000B0ACD        xor     r8b, [rsp+r11+arg_3]
+00000000000B0AD2        inc     eax                            ; rax decryption
+00000000000B0AD4        ror     eax, 1                         ; rax decryption
+00000000000B0AD6        xor     eax, 8F8E1812h                 ; rax decryption
+00000000000B0ADB        or      bp, r8w
+00000000000B0ADF        not     eax                            ; rax decryption
+00000000000B0AE1        mov     [rsp+r11+7], rdi
+00000000000B0AE6        xadd    dl, r8b
+00000000000B0AEA        push    r9
+00000000000B0AEC        xor     [rsp+r11*2+6], eax
+00000000000B0AF1        mov     rdi, [rsp+r11+0Fh]
+00000000000B0AF6        mov     [rsp+r9+8+var_3C8C0AD3], rcx
+00000000000B0AFE        xor     ebp, 0BDB8BB35h
+00000000000B0B04        movsxd  rax, eax
+00000000000B0B07        jge     loc_46A00
+
+0000000000046A00        pop     r9
+0000000000046A02        adc     rsi, rax                       ; add rax + carry flag to rsi which calculates final rsi
+0000000000046A05        and     [rsp+rbp*2+var_1C112186], dl
+0000000000046A0C        mov     r11, [rbx+rbp*8-70448650h]
+0000000000046A14        mov     rax, [rbx+rbp*2-1C11218Ch]
+0000000000046A1C        pop     r9
+0000000000046A1E        adc     r11, rax
+0000000000046A21        add     [rsp+r8-8+arg_2152D471], r9b
+0000000000046A29        lea     rbp, ds:0FFFFFFFFDB094088h[r8*4]
+0000000000046A31        mov     [rbx+r8+2152D477h], r11
+0000000000046A39        lea     rbx, [rdx+rbx-1Dh]
+0000000000046A3E        mov     [rsp+r8-8+arg_2152D477], 733392B5h
+0000000000046A4A        neg     bp
+0000000000046A4D        mov     [rsp+r8*2-8+arg_42A5A8DE], rsi ;rsi holds next vm handler address
+0000000000046A55        retn    8
+```
+
 ## [+] Deadstore removal plugin
 
 The amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function. 
@@ -174,14 +307,9 @@ _nop out deadstore, if the instruction made out of multipul bytes, it truncates 
 ## [+] Devirtualize it
 
 Enough research, it's time to devirtualize it.
-For it I used [NaC-L/Mergen](https://github.com/NaC-L/Mergen) which is a very cool tool to lift obfuscated binary into LLVM IR[^llvm_ir]. It gets assembly as input and interprets each disassembly's semantics into LLVM IR using LLVM/IRBuilder. Moreover, it utilizes LLVM's optimization feature to deobfuscate/devirtualize code.
+For it I used [NaC-L/Mergen](https://github.com/NaC-L/Mergen) which is a very cool tool to disassemble the obfuscated binary and lift it into deobfuscated LLVM IR[^llvm_ir] by optimizing it.
 That way Mergen can universary handle not only VMProtect but other obfuscators and virtualizers.
 I found it so cool that I made a couple of small pull requests to contribute it! You have to check it out!
-
-So this is the output when I run Mergen on the binary.
-
-![mergen_output](mergen_output.png)
-_the output of mergen_
 
 Following is the lifted LLVM IR
 
@@ -226,6 +354,11 @@ vm_entry turned out to be returning 2.
 
 After everything I've been through in this article, I still feel VMProtect is too overwhelming for me but at least gained a lot of fundamental knowledges about it in action and I'm totally satisfied with it!
 
+## References
+
+[https://www.mitchellzakocs.com/blog/vmprotect3](https://www.mitchellzakocs.com/blog/vmprotect3)
+[https://blog.back.engineering/17/05/2021/](https://blog.back.engineering/17/05/2021/)
+[https://blog.es3n1n.eu/posts/obfuscator-pt-1/](https://blog.es3n1n.eu/posts/obfuscator-pt-1/)
 
 ## Footnotes
 
@@ -233,3 +366,4 @@ After everything I've been through in this article, I still feel VMProtect is to
 [^aslr]: **ASLR**: Address Space Layout Randomization. When it is enabled, the binary will be loaded at random location each time which means you have to rebase the program in IDA everytime open it with x64dbg.
 [^opaque_predicates]: **Opaque predicates**: a type of obfuscation techniques which generates a seemingly legit branches that is actually a garbage branching taking you the same branch every time. 
 [^llvm_ir]: **LLVM IR**: LLVM's intermediate representation.
+
