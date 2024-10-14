@@ -15,7 +15,7 @@ image:
 Virtualization is one of the most hard-to-break protection techniques employed widely by both legitimate and malicious applications.
 And I'm totally hooked on it because knowing vmprotect is getting paramount in 2024 to reverse engineer softwares with robust security like anti-cheat software.
 
-A couple of weeks ago, a friend of mine gave me a binary virtualized with VMProtect3.8.1 with 100% complexity + 10vm.
+A couple of weeks ago, a friend of mine gave me a binary virtualized with VMProtect3.8.1 with 100% complexity + 10vms.
 Although I'm an absolute newbie in this field, I always wanted to know about virtualization technique I finally decided to tackle on it and write a diary about how I get wrecked! lol
 
 In this blog post I'll write about what I saw and felt during analysis, it's neither something covers entire VMProtect's feature nor in-depth, but more like initial brief research. Cuz that'd be beyond my wheelhouse.
@@ -63,7 +63,21 @@ Moreover my friend told me where the vm begins, people call it vm_entry, so so t
 But still, the binary is obfuscated with 100% complexity, it could be more and more complicated than what I expect of course.
 Don't worry it's gonna be totally fine, cuz we're here to get wrecked!
 
-## [+] vm_entry
+## [+] Disable ASLR
+
+I noticed that the binary was built with ASLR[^aslr] on, which makes ma unpleasant.
+So I first turned it off.
+
+It's pretty easy, open it with your favorite hex editor and navigate to `NTHeader` -> `OptionalHeader` -> `DllCharacteristics` -> `IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE` and set it to 0.
+
+Then go to Windows security in windows settings and in `App & browser control` tab, turn off `Randomize memory allocations (Bottom up ASLR)`.
+
+That way you can turn off the ASLR and fix the image base across reboot I believe.
+
+> also setting `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel\MitigationOptions`'s third significant bit to 0 does the same thing in registry.
+{: .prompt-tip }
+
+## [+] Find vm entry indication
 
 Right off the bat, look at the main function.
 
@@ -98,7 +112,7 @@ The function has a branch in the middle of it however it turned out to be a part
 I commented in the picture why it'd always takes same branch.
 
 ![vm_entry2](vm_entry2.png)
-_where pushes registers in vm entry_
+_red: opaque predicates, green: register push_
 
 ## [+] Locate VIP initialization
 
@@ -114,7 +128,7 @@ It felt like it took ages to find it, but I finally discovered! In the image bel
 0x7FF5A9EC114D + 0x100000000 = 0x7FF6A9EC114D
 ```
 
-![bytecode_ptr](bytecode_ptr.png)
+![bytecode ptr](bytecode_ptr.png)
 _virtual instruction pointer is being decrypted_
 
 And following is the where the ptr points to.
@@ -124,13 +138,17 @@ _this is what vmprotect custom bytecodes look like_
 
 To ensure it's correct one, I kept going and look for instructions that uses `R10`. Then I found the part where it retrieve a byte from VIP address-7 and moving VIP forward. 
 
-![bytecode ptr ref](bytecode_ptr_ref.png)
+![vip ref](vip_ref.png)
 _getting a byte from vip and updating pointer_
 
 vmp stores opcode and oprand in bytecode field. So when it wants to execute `add eax, 5`, retrieve each opcode and operand just like I showed you, and execute it.
 
 > Note that VIP looks technically going backward just like stack does, but apparently it varies depending on the vm you're dealing with. Some vms actually go forward and others go backward.
 {: .prompt-tip }
+
+## [+] Virtual stack initialization
+
+![virtual stack](virtual_stack.png)
 
 ## [+] Deadstore removal plugin
 
@@ -205,5 +223,6 @@ After everything I've been through in this article, I still feel VMProtect is to
 ## Footnotes
 
 [^bin2bin]: **bin2bin**: a type of obfuscation software. stands for binary to binary. There's another type linker level obfuscation according to [es3n1n's Blog](https://blog.es3n1n.eu/posts/obfuscator-pt-1/).
+[^aslr]: **ASLR**: Address Space Layout Randomization. When it is enabled, the binary will be loaded at random location each time which means you have to rebase the program in IDA everytime open it with x64dbg.
 [^opaque_predicates]: **Opaque predicates**: a type of obfuscation techniques which generates a seemingly legit branches that is actually a garbage branching taking you the same branch every time. 
 [^llvm_ir]: **LLVM IR**: LLVM's intermediate representation.
