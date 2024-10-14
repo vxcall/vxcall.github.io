@@ -1,6 +1,6 @@
 ---
 title: Let's Get Rekt by a VMProtected Binary with 100% Complexity
-date: 2024-10-10 16:00:00 +0900
+date: 2024-10-14 16:00:00 +0900
 categories: [reverse engineering, virtualization]
 tags: [asm, reverse-engineering, virtualization]
 img_path: /assets/img/posts/vmprotect-behavior-research/
@@ -83,7 +83,7 @@ That way you can turn off the ASLR and fix the image base across reboot.
 > also setting `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel\MitigationOptions`'s third significant bit to 0 does the same thing in registry.
 {: .prompt-tip }
 
-## [+] Find vm entry indication
+## [+] Confirm vm entry indication
 
 Right off the bat, look at the main function.
 
@@ -103,49 +103,49 @@ mov     ecx, 1
 ```
 
 Now let's look at the vm_entry (image below).
-As you can see it's pushing 2 registers before going into a subroutine which I remember it was decrypted VIP (like RIP but in VM context) in VMProtect2, but not sure this time `r14` is 0 and `r9` is holding a stack memory address that was initialized in `_initterm` function.
+As you can see it's pushing 2 registers before going into a subroutine which I remember it was encrypted `vip` (like `rip` but in VM context) in VMProtect2, but not sure this time, `r14` is 0 and `r9` is holding a stack memory address that was initialized in `_initterm` function which doesnt look odd to me.
 No idea if it's related to vmp or not.
 
 ![vm_entry](vm_entry.png)
 _vm entry_
 
-Btw In the nature of vm_entry, it should have a specific initialization process.
+Btw in the nature of vm_entry, it should have a specific initialization process.
 Since it's going to use general registers in its vm, it first push all the registers to stack to preserve the current state for later.
 However, based on my memories of VMProtect2, I overconfidently thought 'This should be easy' and ended up learning a painful lesson.
 
 In vmp3, the contents of vm_entry were finely chopped up, and it seemed that a single operation was performed through multiple functions.
 In the VMP2 I had seen before, all register pushes were done in a single function, but this time even the pushes were divided into multiple functions and basic blocks, making it very difficult to search through
 
-I managed to find it, as I said it was chopped up, but the image below is the biggest piece of function which pushes many general registers.
-The function has a branch in the middle of it however it turned out to be a part of the obfuscation, Opaque predicates[^opaque_predicates].
-I commented in the picture why it'd always takes same branch.
+I managed to find it, as I said it was all separated, but the image below is the biggest piece of function which pushes many general registers.
+The function has a branch in the middle of it however it turned out to be a part of the obfuscation, Opaque predicates[^opaque_predicates]. (Virtualized subroutines contain numerous amount of them lol)
+I drew comments in the picture why it'd always takes same branch.
 
 ![vm_entry2](vm_entry2.png)
 _red: opaque predicates, green: register push_
 
 ## [+] Locate VIP initialization
 
-Many instructions in virtualized subroutine doesn't make sense to me and it confuses me at the same time. Idk what to look for and shit.
+Many instructions in virtualized subroutines doesn't make sense to me and it confuses me at the same time. Idk what to look for and shit.
 However 1 thing I know was vmp must've stored custom bytecode for vm somewhere in the binary.
 And wherever it is, the virtualized process will eventually have to access it.
 
 So I decided to debug the program and closely monitor the registers and stack to see if any of them started holding the bytecode pointer, usually refered to as `vip` (virtual instruction pointer).
-It felt like it took ages to find it, but I finally discovered! In the image below, `r9` contains `0x100000000`, and `r10` holds the encrypted `vip`.
+It felt like took ages to find it, but I finally discovered it! In the image below, `r9` contains `0x100000000`, and `r10` holds the encrypted `vip`.
 `r10` has been decrypted along the way, and by combining it with `r9`, the decryption process has been completed.
 
 ```
-0x7FF5A9EC114D + 0x100000000 = 0x7FF6A9EC114D
+0xFFFFFFFF0004114D + 0x100000000 = 0x04114D
 ```
 
 ![vip](vip.png)
 _virtual instruction pointer is being decrypted_
 
-And following is the where the ptr points to.
+And following is where the ptr was pointing to.
 
 ![bytecode](bytecode.png)
 _this is what vmprotect custom bytecodes look like_
 
-To ensure it's correct one, I kept going and look for instructions that uses `r10`. Then I found the part where it retrieve a byte from vip address-7 and moving vip forward. 
+To ensure it's correct one, I kept going and look for instructions that uses `r10`. Then I found the part where it retrieve a byte from `vip-7` and moving vip forward. 
 
 ![vip ref](vip_ref.png)
 _getting a byte from vip and updating pointer_
@@ -166,12 +166,12 @@ By doing this it's creating exclusive stack of size 0x260 while preserving curre
 
 ![virtual stack dbg](virtual_stack_dbg.png)
 
-## [+] VM handler
+## [+] Evil vm handlers
 
 This is the one unit of vm handler.
 Even tho it should be semantically one routine, it's chopped up to lots of basic blocks and it's using disgusting way to jmp around without executing whole subroutines it lands after each call/jmp.
 
-Since it's too complicated, I couldn't just take entire picture of them, I manually put them together to one code below so let's investigate it.
+Since it's too complicated, I couldn't just take entire picture of them, I manually put them together to one code below so let's investigate it closely!!
 
 ```nasm
 0000000000044792        mov     eax, 21322628h
@@ -189,7 +189,7 @@ Since it's too complicated, I couldn't just take entire picture of them, I manua
 00000000000447E0        mov     [rcx+rax+21322628h], rbp
 00000000000447E8        call    sub_8695C
 
-000000000008695C        mov     r11, [rax+r10+21322620h]
+000000000008695C        mov     r11, [rax+r10+21322620h]       ; r11 = (QWORD)(*vip - 8)
 0000000000086964        movzx   ebp, ax
 0000000000086967        xor     r11, rdi
 000000000008696A        rol     r11, 1
@@ -213,7 +213,7 @@ Since it's too complicated, I couldn't just take entire picture of them, I manua
 0000000000083C5F        movsx   r11d, al
 0000000000083C63        dec     ebp
 0000000000083C65        pop     r9
-0000000000083C67        movzx   r8d, byte ptr [r10+rax+2132FFF7h]
+0000000000083C67        movzx   r8d, byte ptr [r10+rax+2132FFF7h]   ; r8d = (BYTE)(*vip - 9)
 0000000000083C70        xor     [rsp+r11*8-8+arg_2], r11d
 0000000000083C75        jnb     loc_CBAC0
 
@@ -249,11 +249,11 @@ Since it's too complicated, I couldn't just take entire picture of them, I manua
 000000000008A465        call    sub_B0A97
 
 00000000000B0A97        rol     [rsp+r11*2+var_116], 0ACh
-00000000000B0AA1        mov     eax, [r11+r10-9Eh]             ; rax populated with bytecode (r10 is vip reg)
+00000000000B0AA1        mov     eax, [r11+r10-9Eh]             ; rax = (DWORD)(*vip - 13)
 00000000000B0AA9        lea     rcx, ds:0FFFFFFFFFD9592B7h[r8*4]
 00000000000B0AB1        ror     r8w, 24h
 00000000000B0AB6        shr     r9w, 0C4h
-00000000000B0ABB        lea     r10, [r10+r11*2-12Fh]          ; vip is no longer used in this vm handler, thus it moves pointer forward
+00000000000B0ABB        lea     r10, [r10+r11*2-12Fh]          ; vip is no longer used in this vm handler, thus it moves pointer forward by 13
 00000000000B0AC3        xor     eax, edi                       ; rax decryption starts by xoring with rolling key (edi)
 00000000000B0AC5        movzx   edx, r11w
 00000000000B0AC9        shr     r11, 44h
@@ -290,9 +290,47 @@ Since it's too complicated, I couldn't just take entire picture of them, I manua
 0000000000046A55        retn    8
 ```
 
+#### 1. Eye catching characteristics
+
+As you can see it employs numbers of disturbing ways to obfuscate its component.
+
+Firstly, at each memory access it does add/subtract operation with registers + constants to hide offset from static analysis.
+This way you can't predict where exactly it's accessing.
+Moreover making it difficult to search specific disassembly you're looking for by searching sequence of bytes.
+Luckly despite of the big numbers it uses as constant, the result of calculation is usually simple.
+
+```nasm
+lea     rbp, [rax+rax+750119A6h]
+mov     [rax+r8+21322628h], r11
+lea     r8, ds:0FFFFFFFF9E3824A7h[rbp*2]
+mov     rbp, [rbx+rax*2+42644C58h]
+```
+{: file='example.asm'}
+
+Secondly, it exits current subroutine it's executing at every first `call` or `jmp` instruction it runs into.
+Doesn't matter how big subroutine currently it's in, as soon as it encounters `call`/`jmp` it carries on to another location abandoning the rest of the subroutine and never came back to where it was.
+
+Lastly, it frequently use indirect jmp using general registers such as `rax`, `rcx` or `r9`.
+Among registers, a register is randomly picked and used for jmp.
+However there's a unique tendency.
+The jmp destination is always made out of return address pushed onto the top of the stack from last `call` + constant. 
+
+```nasm
+pop     rax                       ; rax gets return address 0xCBACE
+add     rax, 0FFFFFFFFFFFBE97Eh   ; add constant offset to it
+jmp     rax                       ; jmp
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+pop     rcx                       ; rcx gets return address on top of the stack
+add     rcx, 4ABEh                ; add constant offset to it
+jmp     rcx                       ; jmp
+```
+{: file='example.asm'}
+
 ## [+] Deadstore removal plugin
 
-The amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function. 
+By the way, the amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function. 
 
 [vxcall/deadstore-remover](https://gist.github.com/vxcall/1b2841370d07f25dc0d729985306bf4f)
 
@@ -307,9 +345,15 @@ _nop out deadstore, if the instruction made out of multipul bytes, it truncates 
 ## [+] Devirtualize it
 
 Enough research, it's time to devirtualize it.
+The word 'devirtualize' here doesn't mean recompiling it to clean binary.
+But lift it to LLVM IR to see what virtualized subroutine does.
+Recompile is another subject I hopefully will do one day!
+
 For it I used [NaC-L/Mergen](https://github.com/NaC-L/Mergen) which is a very cool tool to disassemble the obfuscated binary and lift it into deobfuscated LLVM IR[^llvm_ir] by optimizing it.
 That way Mergen can universary handle not only VMProtect but other obfuscators and virtualizers.
-I found it so cool that I made a couple of small pull requests to contribute it! You have to check it out!
+
+> I found it so cool that I made a couple of small pull requests to contribute it! You have to check it out too!
+{: .prompt-info }
 
 Following is the lifted LLVM IR
 
@@ -352,7 +396,11 @@ vm_entry turned out to be returning 2.
 
 ![footer](footer.jpg)
 
-After everything I've been through in this article, I still feel VMProtect is too overwhelming for me but at least gained a lot of fundamental knowledges about it in action and I'm totally satisfied with it!
+I discovered many interesting techniques and tendencies it has, and barely understand what it's doing in virtualized routines.
+However advanced things patching and hooking virtualized function, or recompile it to devirtualized binary is yet another difficulties I'll have to figure out.
+But thanks to this research I'm pretty sure I'll be capable of it one day.
+
+After everything I've been through, I still feel VMProtect is over my head but gained priceless knowledges about it and I'm totally satisfied with it!
 
 ## References
 
