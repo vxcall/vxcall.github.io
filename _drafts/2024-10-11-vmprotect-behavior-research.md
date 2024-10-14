@@ -120,15 +120,15 @@ Many instructions in virtualized subroutine doesn't make sense to me and it conf
 However 1 thing I know was vmp must've stored custom bytecode for vm somewhere in the binary.
 And wherever it is, the virtualized process will eventually have to access it.
 
-So I decided to debug the program and closely monitor the registers and stack to see if any of them started holding the bytecode pointer, usually refered to as `VIP` (virtual instruction pointer).
-It felt like it took ages to find it, but I finally discovered! In the image below, `R9` contains `0x100000000`, and `R10` holds the encrypted `VIP`.
-`R10` has been decrypted along the way, and by combining it with `R9`, the decryption process has been completed.
+So I decided to debug the program and closely monitor the registers and stack to see if any of them started holding the bytecode pointer, usually refered to as `vip` (virtual instruction pointer).
+It felt like it took ages to find it, but I finally discovered! In the image below, `r9` contains `0x100000000`, and `r10` holds the encrypted `vip`.
+`r10` has been decrypted along the way, and by combining it with `r9`, the decryption process has been completed.
 
 ```
 0x7FF5A9EC114D + 0x100000000 = 0x7FF6A9EC114D
 ```
 
-![bytecode ptr](bytecode_ptr.png)
+![vip](vip.png)
 _virtual instruction pointer is being decrypted_
 
 And following is the where the ptr points to.
@@ -136,19 +136,26 @@ And following is the where the ptr points to.
 ![bytecode](bytecode.png)
 _this is what vmprotect custom bytecodes look like_
 
-To ensure it's correct one, I kept going and look for instructions that uses `R10`. Then I found the part where it retrieve a byte from VIP address-7 and moving VIP forward. 
+To ensure it's correct one, I kept going and look for instructions that uses `r10`. Then I found the part where it retrieve a byte from vip address-7 and moving vip forward. 
 
 ![vip ref](vip_ref.png)
 _getting a byte from vip and updating pointer_
 
 vmp stores opcode and oprand in bytecode field. So when it wants to execute `add eax, 5`, retrieve each opcode and operand just like I showed you, and execute it.
 
-> Note that VIP looks technically going backward just like stack does, but apparently it varies depending on the vm you're dealing with. Some vms actually go forward and others go backward.
+> Note that vip looks technically going backward just like stack does, but apparently it varies depending on the vm you're dealing with. Some vms actually go forward and others go backward.
 {: .prompt-tip }
 
 ## [+] Virtual stack initialization
 
+Here it seems allocating new stack frame for vm.
+
 ![virtual stack](virtual_stack.png)
+
+Moving `r12` to `rsp`, `r12` is pointing to stack memory, and the gap between `r12` and  `rsp` is 0x260.
+By doing this it's creating exclusive stack of size 0x260 while preserving current stack at the same time.
+
+![virtual stack dbg](virtual_stack_dbg.png)
 
 ## [+] Deadstore removal plugin
 
@@ -204,9 +211,9 @@ As you can see it's basically doing `rcx - rdx + r8` and returning the result, w
 Yes they're the ones initialized before going into vm_entry.
 They are
 
-- `RCX`: 1
-- `RDX`: 2
-- `R8`: 3
+- `rcx`: 1
+- `rdx`: 2
+- `r8`: 3
 
 respectively.
 
