@@ -328,6 +328,51 @@ jmp     rcx                       ; jmp
 ```
 {: file='example.asm'}
 
+#### 2. Calculating next vm handler address
+
+When it finishes current vm handler and carries on to next handler, it always uses `rsi` register + `ret` instruction.
+So I wondered where this `rsi` is comming from?
+
+```nasm
+; [rsp+r8*2-8+arg_42A5A8DE] is equivalent to [rsp].
+mov     [rsp+r8*2-8+arg_42A5A8DE], rsi 
+retn    8
+```
+
+So right before `rsi` was pushed to stack, it's combined with `rax` and cf.
+
+```nasm
+; add rax + carry flag which calculates final rsi value
+adc     rsi, rax
+```
+
+Now trace back to where `rax` was initialized, and follow how it gets mutated.
+Basically, the following 6 instructions are where `rax` is involved.
+According to it, `rax` holds dword size value, assuming encrypted offset, and assigned originally from location at *vip - 13.
+then some decryptions have been applied.
+
+```nasm
+mov     eax, [r11+r10-9Eh]             ; rax = (DWORD)(*vip - 13)
+xor     eax, edi                       ; rax decryption starts by xoring with rolling key (edi)
+inc     eax                            ; rax decryption
+ror     eax, 1                         ; rax decryption
+xor     eax, 8F8E1812h                 ; rax decryption
+not     eax                            ; rax decryption
+```
+
+Then aforementioned adc and retn happens.
+
+From this, I can now tell that next vm handler's offset is embedded somewhere close to `vip` and virtualized function extracts it each time to calculate offset.
+
+#### 3. Demystify bytecode layout
+
+In the last paragraph we know that next vm handler's offset is located at `*vip - 13`.
+So what is embedded between `*vip` and `*vip - 9`?
+I recon from how virtualized function accessing `vip`, you can presume how VMProtect designs bytecode layout.
+
+Let's trace `vip` and registers comming from `vip`.
+
+
 ## [+] Deadstore removal plugin
 
 By the way, the amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function. 
