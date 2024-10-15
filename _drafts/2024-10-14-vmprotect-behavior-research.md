@@ -131,6 +131,20 @@ I've added comments to the picture explaining why it would always take the same 
 ![vm_entry2](vm_entry2.png)
 _red: opaque predicates, green: register push_
 
+## [+] Deadstore removal plugin
+
+By the way, the amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function.
+
+[vxcall/deadstore-remover](https://gist.github.com/vxcall/1b2841370d07f25dc0d729985306bf4f)
+
+Place it in IDA's `plugins` folder.
+It's utilizing a library called [triton](https://github.com/jonathansalwan/Triton), therefore you have to build it to use my plugin.
+Also it works on IDA 8.X but doesnt work on IDA 9.X due to the API compatibility.
+You can use it by placing cursor on the middle of a function in IDA and run the plugin I named it "Function Deadstore remover", so that the plugin will analyze and nop out every garbage instructions.
+
+![deadstore-remover](deadstore_remover.png)
+_nop out deadstore, if the instruction made out of multipul bytes, it truncates them_
+
 ## [+] Locate VIP initialization
 
 Many instructions in virtualized subroutines didn't make sense to me, which was both confusing and frustrating.
@@ -422,21 +436,6 @@ xor     eax, 8F8E1812h
 not     eax
 ```
 
-
-## [+] Deadstore removal plugin
-
-By the way, the amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function.
-
-[vxcall/deadstore-remover](https://gist.github.com/vxcall/1b2841370d07f25dc0d729985306bf4f)
-
-Place it in IDA's `plugins` folder.
-It's utilizing a library called [triton](https://github.com/jonathansalwan/Triton), therefore you have to build it to use my plugin.
-Also it works on IDA 8.X but doesnt work on IDA 9.X due to the API compatibility.
-You can use it by placing cursor on the middle of a function in IDA and run the plugin I named it "Function Deadstore remover", so that the plugin will analyze and nop out every garbage instructions.
-
-![deadstore-remover](deadstore_remover.png)
-_nop out deadstore, if the instruction made out of multipul bytes, it truncates them_
-
 ## [+] Devirtualize it
 
 Enough research, it's time to devirtualize the code.
@@ -497,6 +496,8 @@ Throughout this research, I've uncovered numerous interesting techniques and ten
 While I've gained a basic understanding of what's happening in these virtualized routines, more advanced tasks like patching and hooking virtualized functions, or recompiling to a fully devirtualized binary, remain significant challenges that I'll need to tackle in the future.
 
 But thanks to this research I'm pretty sure I'll be capable of it one day.
+
+This investigation has been invaluable, providing me with crucial insights that I'm confident will enable me to overcome these advanced challenges eventually. Despite all I've learned, I still feel that VMProtect's complexity is somewhat beyond my current expertise. However, I've gained priceless knowledge about its inner workings, and I'm thoroughly satisfied with the progress I've made.
 
 After everything I've been through, I still feel VMProtect is over my head but gained priceless knowledges about it and I'm totally satisfied with it!
 
