@@ -290,7 +290,7 @@ Since it's too complicated, I couldn't just take entire picture of them, I manua
 0000000000046A55        retn    8
 ```
 
-#### 1. Eye catching characteristics
+#### Eye catching characteristics
 
 As you can see it employs numbers of disturbing ways to obfuscate its component.
 
@@ -328,7 +328,7 @@ jmp     rcx                       ; jmp
 ```
 {: file='example.asm'}
 
-#### 2. Calculating next vm handler address
+#### Calculating next vm handler address
 
 When it finishes current vm handler and carries on to next handler, it always uses `rsi` register + `ret` instruction.
 So I wondered where this `rsi` is comming from?
@@ -347,12 +347,22 @@ adc     rsi, rax
 ```
 
 Now trace back to where `rax` was initialized, and follow how it gets mutated.
-Basically, the following 6 instructions are where `rax` is involved.
-According to it, `rax` holds dword size value, assuming encrypted offset, and assigned originally from location at *vip - 13.
-then some decryptions have been applied.
+Basically, there're 6 instructions involves `rax`.
+According to it, `rax` holds dword size value, assuming encrypted offset, and assigned originally from location at `*vip - 13`.
 
 ```nasm
 mov     eax, [r11+r10-9Eh]             ; rax = (DWORD)(*vip - 13)
+```
+
+Following is the figure of what it's taking.
+It's taking DWORD from 13 bytes away from where `vip` is pointing to.
+
+![vm handler eax](vm_handler_eax.png)
+
+`eax` became `0x5F17544C` now.
+Then sequence of decryptions have been applied to eax.
+
+```nasm
 xor     eax, edi                       ; rax decryption starts by xoring with rolling key (edi)
 inc     eax                            ; rax decryption
 ror     eax, 1                         ; rax decryption
@@ -364,13 +374,45 @@ Then aforementioned adc and retn happens.
 
 From this, I can now tell that next vm handler's offset is embedded somewhere close to `vip` and virtualized function extracts it each time to calculate offset.
 
-#### 3. Demystify bytecode layout
+#### Demystify the bytecode layout
 
 In the last paragraph we know that next vm handler's offset is located at `*vip - 13`.
 So what is embedded between `*vip` and `*vip - 9`?
 I recon from how virtualized function accessing `vip`, you can presume how VMProtect designs bytecode layout.
 
 Let's trace `vip` and registers comming from `vip`.
+
+```nasm
+mov     r11, [rax+r10+21322620h]       ; r11 = (QWORD)(*vip - 8)
+xor     r11, rdi
+rol     r11, 1
+not     r11
+bswap   r11
+rol     r11, 2
+neg     r11
+xor     rdi, r11
+mov     [rbx+rax*2+42660008h], r11
+```
+
+```nasm
+movzx   r8d, byte ptr [r10+rax+2132FFF7h]   ; r8d = (BYTE)(*vip - 9)
+xor     r8b, dil
+dec     r8b
+ror     r8b, 1
+not     r8b
+rol     r8b, 1
+lea     r8, [rsp+r8+arg_10]
+mov     rdx, [r8+rax+21330000h]
+```
+
+```nasm
+mov     eax, [r11+r10-9Eh]
+xor     eax, edi
+inc     eax
+ror     eax, 1
+xor     eax, 8F8E1812h
+not     eax
+```
 
 
 ## [+] Deadstore removal plugin
