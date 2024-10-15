@@ -65,20 +65,22 @@ Don't worry it's gonna be totally fine, cuz we're here to get wrecked!
 
 ## [+] Disable ASLR
 
-I noticed that the binary was built with `/DYNAMICBASE` option, which enables ASLR[^aslr]
-It made me unpleasant in debugging session.
+I noticed that the binary was compiled with the `/DYNAMICBASE` option, which enables Address Space Layout Randomization (ASLR)[^aslr]. This made debugging sessions unpleasant.
 
-It's pretty easy to turned it off, open the binary with your favorite hex editor and navigate to 
+Fortunately, it's relatively straightforward to disable this feature. Here's how:
 
-```
-NTHeader -> OptionalHeader -> DllCharacteristics -> IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
-```
+1. Open the binary with your preferred hex editor.
+2. Navigate to the following location in the file structure:
+`NTHeader -> OptionalHeader -> DllCharacteristics -> IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE`
+3. Set this value to 0.
 
-and set it to 0.
+Additionally, to ensure ASLR is completely disabled:
 
-Then go to Windows security in windows settings and in `App & browser control` tab, turn off `Randomize memory allocations (Bottom up ASLR)`.
+1. Open Windows Settings and go to 'Windows Security'.
+2. Navigate to the 'App & browser control' tab.
+3. Turn off the option 'Randomize memory allocations (Bottom up ASLR)'.
 
-That way you can turn off the ASLR and fix the image base across reboot.
+By following these steps, you can disable ASLR and fix the image base across system reboots, which should significantly make your debugging process comfortable.
 
 > also setting `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel\MitigationOptions`'s third significant bit to 0 does the same thing in registry.
 {: .prompt-tip }
@@ -90,11 +92,10 @@ Right off the bat, look at the main function.
 ![main](main.png)
 _main function_
 
-Right before going into vm_entry it's assigning value to the 3 registers.
-It's not a deafult x64 __fastcall calling convension but come on it's VMProtect!
-It'd do anything dirty.
-you can assume that they could be used in vm_entry.
-Keep it in mind and carry on.
+Just before entering vm_entry, the code assigns values to three registers. This doesn't conform to the standard x64 `__fastcall` calling convention, but we're dealing with VMProtect here!
+It's known for employing unconventional techniques.
+
+We can reasonably assume that these register assignments might be utilized within vm. It's important to keep this in mind as we continue our analysis.
 
 ```nasm
 mov     r8d, 3
@@ -102,9 +103,14 @@ mov     edx, 2
 mov     ecx, 1
 ```
 
-Now let's look at the vm_entry (image below).
-As you can see it's pushing 2 registers before going into a subroutine which I remember it was encrypted `vip` (like `rip` but in VM context) in VMProtect2, but not sure this time, `r14` is 0 and `r9` is holding a stack memory address that was initialized in `_initterm` function which doesnt look odd to me.
-No idea if it's related to vmp or not.
+Now, let's examine the vm_entry point (shown in the image below).
+As you can see, it's pushing two registers before entering a subroutine.
+In VMProtect2, I recall that this operation typically involved pushing the encrypted `vip` (similar to `rip`, but in the VM context).
+However, I'm not certain if that's the case here.
+
+In this instance, `r14` is set to 0, and `r9` is holding a stack memory address that was initialized in the `_initterm` function.
+This doesn't appear unusual to me at first glance.
+I'm unsure whether this is related to VMProtect's operations or not.
 
 ![vm_entry](vm_entry.png)
 _vm entry_
@@ -116,22 +122,27 @@ However, based on my memories of VMProtect2, I overconfidently thought 'This sho
 In vmp3, the contents of vm_entry were finely chopped up, and it seemed that a single operation was performed through multiple functions.
 In the VMP2 I had seen before, all register pushes were done in a single function, but this time even the pushes were divided into multiple functions and basic blocks, making it very difficult to search through
 
-I managed to find it, as I said it was all separated, but the image below is the biggest piece of function which pushes many general registers.
-The function has a branch in the middle of it however it turned out to be a part of the obfuscation, Opaque predicates[^opaque_predicates]. (Virtualized subroutines contain numerous amount of them lol)
-I drew comments in the picture why it'd always takes same branch.
+I eventually managed to find it, as I mentioned, it was all separated.
+The image below shows the largest piece of a function that pushes many general registers.
+The function has a branch in the middle; however, it turned out to be part of the obfuscation technique known as opaque predicates[^opaque_predicates].
+(Virtualized subroutines contain numerous instances of these, by the way.)
+I've added comments to the picture explaining why it would always take the same branch.
 
 ![vm_entry2](vm_entry2.png)
 _red: opaque predicates, green: register push_
 
 ## [+] Locate VIP initialization
 
-Many instructions in virtualized subroutines doesn't make sense to me and it confuses me at the same time. Idk what to look for and shit.
-However 1 thing I know was vmp must've stored custom bytecode for vm somewhere in the binary.
-And wherever it is, the virtualized process will eventually have to access it.
+Many instructions in virtualized subroutines didn't make sense to me, which was both confusing and frustrating.
+I wasn't sure what to look for.
+However, one thing I knew was that VMProtect must have stored custom bytecode for the virtual machine somewhere in the binary.
+And wherever it was, the virtualized process would eventually have to access it.
 
-So I decided to debug the program and closely monitor the registers and stack to see if any of them started holding the bytecode pointer, usually refered to as `vip` (virtual instruction pointer).
-It felt like took ages to find it, but I finally discovered it! In the image below, `r9` contains `0x100000000`, and `r10` holds the encrypted `vip`.
-`r10` has been decrypted along the way, and by combining it with `r9`, the decryption process has been completed.
+So, I decided to debug the program and closely monitor the registers and stack to see if any of them started holding the bytecode pointer, usually referred to as `vip` (virtual instruction pointer).
+It felt like it took ages to find it, but I finally made a breakthrough!
+
+In the image below, you can see that `r9` contains `0x100000000`, and `r10` holds the encrypted `vip`.
+As the program executed, `r10` was decrypted along the way. By combining it with `r9`, the decryption process was completed, revealing the true `vip`.
 
 ```
 0xFFFFFFFF0004114D + 0x100000000 = 0x04114D
@@ -145,12 +156,12 @@ And following is where the ptr was pointing to.
 ![bytecode](bytecode.png)
 _this is what vmprotect custom bytecodes look like_
 
-To ensure it's correct one, I kept going and look for instructions that uses `r10`. Then I found the part where it retrieve a byte from `vip-7` and moving vip forward. 
+To confirm that I had indeed found the correct pointer, I continued debugging and looked for instructions that used `r10`. Eventually, I found the part where it retrieves a byte from `vip-7` and moves the vip forward.
 
 ![vip ref](vip_ref.png)
 _getting a byte from vip and updating pointer_
 
-vmp stores opcode and oprand in bytecode field. So when it wants to execute `add eax, 5`, retrieve each opcode and operand just like I showed you, and execute it.
+VMProtect stores opcodes and operands in the bytecode field. So when it wants to execute an instruction like `add eax, 5`, it retrieves each opcode and operand as I've shown you, and then executes it.
 
 > Note that vip looks technically going backward just like stack does, but apparently it varies depending on the vm you're dealing with. Some vms actually go forward and others go backward.
 {: .prompt-tip }
@@ -168,10 +179,12 @@ By doing this it's creating exclusive stack of size 0x260 while preserving curre
 
 ## [+] Evil vm handlers
 
-This is the one unit of vm handler.
-Even tho it should be semantically one routine, it's chopped up to lots of basic blocks and it's using disgusting way to jmp around without executing whole subroutines it lands after each call/jmp.
+This represents one unit of a VM handler.
+Although it should semantically be a single routine, it's been chopped up into numerous basic blocks.
+It uses a convoluted method to jump around without executing entire subroutines after each call or jump.
 
-Since it's too complicated, I couldn't just take entire picture of them, I manually put them together to one code below so let's investigate it closely!!
+Due to its complexity, I couldn't simply capture the entire structure in one image.
+Instead, I've manually assembled the relevant parts into a single code block below. Let's examine it closely!
 
 ```nasm
 0000000000044792        mov     eax, 21322628h
@@ -292,12 +305,12 @@ Since it's too complicated, I couldn't just take entire picture of them, I manua
 
 #### Eye catching characteristics
 
-As you can see it employs numbers of disturbing ways to obfuscate its component.
+As you can see, this code employs numerous disruptive techniques to obfuscate its components.
 
-Firstly, at each memory access it does add/subtract operation with registers + constants to hide offset from static analysis.
-This way you can't predict where exactly it's accessing.
-Moreover making it difficult to search specific disassembly you're looking for by searching sequence of bytes.
-Luckly despite of the big numbers it uses as constant, the result of calculation is usually simple.
+Firstly, each memory access involves addition or subtraction operations with registers and constants to obscure offsets from static analysis.
+This approach makes it challenging to predict exactly where the code is accessing memory.
+Moreover, it complicates the process of searching for specific disassembly by looking for byte sequences.
+Fortunately, despite the large constants used, the results of these calculations are usually simple.
 
 ```nasm
 lea     rbp, [rax+rax+750119A6h]
@@ -307,13 +320,12 @@ mov     rbp, [rbx+rax*2+42644C58h]
 ```
 {: file='example.asm'}
 
-Secondly, it exits current subroutine it's executing at every first `call` or `jmp` instruction it runs into.
-Doesn't matter how big subroutine currently it's in, as soon as it encounters `call`/`jmp` it carries on to another location abandoning the rest of the subroutine and never came back to where it was.
+Secondly, the code exits the current subroutine as soon as it encounters a call or jmp instruction.
+Regardless of the subroutine's size, once it hits a call or jmp, it continues execution at another location, abandoning the rest of the current subroutine and never returning to where it left off.
 
-Lastly, it frequently use indirect jmp using general registers such as `rax`, `rcx` or `r9`.
-Among registers, a register is randomly picked and used for jmp.
-However there's a unique tendency.
-The jmp destination is always made out of return address pushed onto the top of the stack from last `call` + constant. 
+Lastly, the code frequently uses indirect jumps with general registers such as rax, rcx, or r9.
+A register is randomly selected for each jump.
+However, there's a unique pattern: the jump destination is always calculated by adding a constant to the return address pushed onto the top of the stack from the last call.
 
 ```nasm
 pop     rax                       ; rax gets return address 0xCBACE
@@ -330,49 +342,45 @@ jmp     rcx                       ; jmp
 
 #### Calculating next vm handler address
 
-When it finishes current vm handler and carries on to next handler, it always uses `rsi` register + `ret` instruction.
-So I wondered where this `rsi` is comming from?
+When finishing the current VM handler and moving on to the next one, the code consistently uses the `rsi` register with a `ret` instruction. This led me to investigate the source of `rsi`'s value.
+
+The final step before jumping to the next handler looks like this:
 
 ```nasm
 ; [rsp+r8*2-8+arg_42A5A8DE] is equivalent to [rsp].
-mov     [rsp+r8*2-8+arg_42A5A8DE], rsi 
+mov     [rsp+r8*2-8+arg_42A5A8DE], rsi
 retn    8
 ```
 
-So right before `rsi` was pushed to stack, it's combined with `rax` and cf.
+Tracing back, I found that rsi is calculated by combining it with `rax` and the carry flag.
+At this point I thought `rax` is most likely an relative offset to the next vm handler.
 
 ```nasm
 ; add rax + carry flag which calculates final rsi value
 adc     rsi, rax
 ```
 
-Now trace back to where `rax` was initialized, and follow how it gets mutated.
-Basically, there're 6 instructions involves `rax`.
-According to it, `rax` holds dword size value, assuming encrypted offset, and assigned originally from location at `*vip - 13`.
+To understand this fully, I needed to trace `rax`'s initialization and subsequent mutations. There are six key instructions involving `rax`:
 
 ```nasm
-mov     eax, [r11+r10-9Eh]             ; rax = (DWORD)(*vip - 13)
+mov     eax, [r11+r10-9Eh]             ; load 32-bit value from (vip - 13)
+xor     eax, edi                       ; xor with rolling key (edi)
+inc     eax                            ; increment
+ror     eax, 1                         ; rotate right by 1 bit
+xor     eax, 8F8E1812h                 ; xor with constant
+not     eax                            ; bitwise not
 ```
 
-Following is the figure of what it's taking.
-It's taking DWORD from 13 bytes away from where `vip` is pointing to.
+The initial value of `eax` is loaded from 13 bytes before the current `vip` (virtual instruction pointer). Image below depicts it.
 
 ![vm handler eax](vm_handler_eax.png)
+_concept image of vip load_
 
-`eax` became `0x5F17544C` now.
-Then sequence of decryptions have been applied to eax.
+For example, if `eax` becomes `0x5F17544C` after this load, it then goes through a series of decryption steps as shown above and consequently becomes `0x5ecd6741`.
 
-```nasm
-xor     eax, edi                       ; rax decryption starts by xoring with rolling key (edi)
-inc     eax                            ; rax decryption
-ror     eax, 1                         ; rax decryption
-xor     eax, 8F8E1812h                 ; rax decryption
-not     eax                            ; rax decryption
-```
-
-Then aforementioned adc and retn happens.
-
-From this, I can now tell that next vm handler's offset is embedded somewhere close to `vip` and virtualized function extracts it each time to calculate offset.
+This process reveals that the offset to the next VM handler is embedded near the `vip`.
+The virtualized function extracts and decrypts this value each time to calculate the offset to the next handler.
+This mechanism makes it challenging to statically analyze the code flow, as the next handler's location is dynamically determined at runtime.
 
 #### Demystify the bytecode layout
 
@@ -417,7 +425,7 @@ not     eax
 
 ## [+] Deadstore removal plugin
 
-By the way, the amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function. 
+By the way, the amount of deadstore vmp inserts between legit instructions are insane that I almost lose my temper so I quickly made an IDA plugin to remove all the deadstores in the current function.
 
 [vxcall/deadstore-remover](https://gist.github.com/vxcall/1b2841370d07f25dc0d729985306bf4f)
 
@@ -431,13 +439,13 @@ _nop out deadstore, if the instruction made out of multipul bytes, it truncates 
 
 ## [+] Devirtualize it
 
-Enough research, it's time to devirtualize it.
-The word 'devirtualize' here doesn't mean recompiling it to clean binary.
-But lift it to LLVM IR to see what virtualized subroutine does.
-Recompile is another subject I hopefully will do one day!
+Enough research, it's time to devirtualize the code.
+To clarify, when I say 'devirtualize' here, I don't mean recompiling it into a clean binary.
+Instead, our goal is to lift the code to LLVM IR[^llvm_ir] to better understand what the virtualized subroutine does.
+Recompiling to a clean binary is a separate, more complex task that I hope to tackle in the future!
 
-For it I used [NaC-L/Mergen](https://github.com/NaC-L/Mergen) which is a very cool tool to disassemble the obfuscated binary and lift it into deobfuscated LLVM IR[^llvm_ir] by optimizing it.
-That way Mergen can universary handle not only VMProtect but other obfuscators and virtualizers.
+For this devirtualization process, I used [NaC-L/Mergen](https://github.com/NaC-L/Mergen), which is an impressive tool designed to disassemble obfuscated binaries and lift them into deobfuscated LLVM IR through optimization.
+Mergen's approach allows it to handle not just VMProtect, but a wide range of obfuscators and virtualizers, making it a versatile solution for this kind of work.
 
 > I found it so cool that I made a couple of small pull requests to contribute it! You have to check it out too!
 {: .prompt-info }
@@ -466,9 +474,10 @@ attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memor
 ```
 {: file='output.llvm'}
 
-As you can see it's basically doing `rcx - rdx + r8` and returning the result, which every register looks familiar to me.
-Yes they're the ones initialized before going into vm_entry.
-They are
+As you can see it's basically performing `rcx - rdx + r8` and returning the result.
+These registers look familiar because they're the ones initialized just before entering vm_entry.
+
+To recap, their values are:
 
 - `rcx`: 1
 - `rdx`: 2
@@ -476,15 +485,17 @@ They are
 
 respectively.
 
-So the final equation will be `1 - 2 + 3 = 2`
-vm_entry turned out to be returning 2.
+Plugging these values into the equation, we get:
+1 - 2 + 3 = 2
+Therefore, we can conclude that vm_entry is ultimately returning the value 2.
 
 ## Conclusion
 
 ![footer](footer.jpg)
 
-I discovered many interesting techniques and tendencies it has, and barely understand what it's doing in virtualized routines.
-However advanced things patching and hooking virtualized function, or recompile it to devirtualized binary is yet another difficulties I'll have to figure out.
+Throughout this research, I've uncovered numerous interesting techniques and tendencies in VMProtect's virtualization process.
+While I've gained a basic understanding of what's happening in these virtualized routines, more advanced tasks like patching and hooking virtualized functions, or recompiling to a fully devirtualized binary, remain significant challenges that I'll need to tackle in the future.
+
 But thanks to this research I'm pretty sure I'll be capable of it one day.
 
 After everything I've been through, I still feel VMProtect is over my head but gained priceless knowledges about it and I'm totally satisfied with it!
@@ -499,6 +510,5 @@ After everything I've been through, I still feel VMProtect is over my head but g
 
 [^bin2bin]: **bin2bin**: a type of obfuscation software. stands for binary to binary. There's another type linker level obfuscation according to [es3n1n's Blog](https://blog.es3n1n.eu/posts/obfuscator-pt-1/).
 [^aslr]: **ASLR**: Address Space Layout Randomization. When it is enabled, the binary will be loaded at random location each time which means you have to rebase the program in IDA everytime open it with x64dbg.
-[^opaque_predicates]: **Opaque predicates**: a type of obfuscation techniques which generates a seemingly legit branches that is actually a garbage branching taking you the same branch every time. 
+[^opaque_predicates]: **Opaque predicates**: a type of obfuscation techniques which generates a seemingly legit branches that is actually a garbage branching taking you the same branch every time.
 [^llvm_ir]: **LLVM IR**: LLVM's intermediate representation.
-
