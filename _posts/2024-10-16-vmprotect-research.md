@@ -351,6 +351,7 @@ The image below illustrates how VM jumps around the text section.
 The parts with yellow background is where it actually executed, and the rest of them are not in entire execution.
 
 ![jumping around](jumping_around.png)
+_execution flow is obscured by jumping around_
 
 Lastly, the code frequently uses indirect jumps with general registers such as `rax`, `rcx`, `r9` and so on.
 A register to jump seems randomly selected for each jump.
@@ -394,7 +395,7 @@ Look at this decryption routine closely.
 In this VM, the `rdi` register plays a crucial role as the rolling decryption key.
 The values embedded in the bytecode field are self-encrypted
 Therefore extracted value using `vip` always gets decrypted, and the rolling decryption key is responsible for initiating the first step in a series of decryption procedures.
-A consistent pattern throughout this VM is that once a decryption operation is completed, the rolling decryption key is updated using the newly extracted value.
+A consistent pattern throughout VM is that once a decryption operation is completed, the rolling decryption key is updated using the newly extracted value.
 
 ```nasm
 xor     r11, rdi                       ; decryption starts
@@ -440,6 +441,11 @@ The third instance where r10 is used is in calculating the offset for the next V
 We'll examine this in more detail later.
 
 Finally, `r10` is referenced at the following part:
+
+```nasm
+lea     r10, [r10+r11*2-12Fh]
+```
+
 This is where r10 is updated for use in the next VM handler.
 Up to this point, the VM has consumed 13 bytes from the memory region pointed to by r10.
 
@@ -448,15 +454,14 @@ Up to this point, the VM has consumed 13 bytes from the memory region pointed to
 - 4 bytes for third use which I skipped
 
 The calculation r11*2-12Fh results in -13, which precisely subtracts the number of bytes used in the current VM handler.
-This operation is performed using the following instruction:
 
-```nasm
-lea     r10, [r10+r11*2-12Fh]
-```
+> Some ginormous VM handlers actually update its `vip` multiple times within a handler.
+{: .prompt-tip }
 
 #### 3. Calculating next VM handler address
 
-When finishing the current VM handler and moving on to the next one, the code consistently uses the `rsi` register with a `ret` instruction. This led me to investigate the source of `rsi`'s value.
+When finishing the current VM handler and moving on to the next one, the code consistently uses the `rsi` register with a `ret` instruction.
+This led me to investigate the source of `rsi`'s value.
 
 The final step before jumping to the next handler looks like this:
 
@@ -569,6 +574,7 @@ I know the virtualized subroutine performs the calculation `1 - 2 + 3` somewhere
 Following is the tracing log showing the transition between virtualized subroutine and main.
 
 ![tracing log](tracing_log.png)
+_tracing log between virtualized and non-virtualized_
 
 We can see that the value inside rax was popped from the stack at the end.
 I traced it back to where it was originally calculated, which turned out to be a hell of a long journey.
@@ -577,6 +583,7 @@ This was because VMProtect meaninglessly transferred the post-calculation value 
 Eventually, I found the location of the final calculation, which is `-1 + 3`:
 
 ![core arithmetic operation](core_arithmetic.png)
+_performing core arithmetic operation_
 
 It's worth noting that the values in `rdx` (-1) and `r8` (3) were calculated in advance by other VM handlers.
 However, I'll refrain from extending this blog post with more obvious details. For now, I'll conclude my analysis here!
