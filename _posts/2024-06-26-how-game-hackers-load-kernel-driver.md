@@ -23,6 +23,7 @@ This ongoing cat-and-mouse game explains why cheating remains a persistent issue
 This post will introduce you to a tool called [kdmapper](https://github.com/TheCruZ/kdmapper), which is frequently used by cheat developers to load unsigned kernel drivers into kernel space. Understanding this tool and its implications is crucial for comprehending the current state of game security and cheating techniques.
 
 ## Table of Contents
+
 - [What is kernel driver?](#what-is-kernel-driver)
 - [[+] Dark arts: kdmapper](#-dark-arts-kdmapper)
 - [[+] Process of mapping](#-process-of-mapping)

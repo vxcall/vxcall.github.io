@@ -23,6 +23,24 @@ In this blog post I'll write about what I saw and felt during analysis, it's nei
 > This article might be too rudimentary for those who ever dealt with VMProtect before. Also there might be misunderstandings, forgive me I'm not a professional.
 {: .prompt-warning }
 
+## Table of Contents
+
+- [About virtualization](#about-virtualization)
+- [let's get rekt!](#lets-get-rect)
+- [[+] Disable ASLR](#-disable-aslr)
+- [[+] The binary's behavior](#-the-binarys-behavior)
+- [[+] Main function](#-main-function)
+- [[+] Confirm VM entry indication](#-confirm-vm-entry-indication)
+- [[+] Deadstore removal plugin](#-deadstore-removal-plugin)
+- [[+] Locate VIP initialization](#-locate-vip-initialization)
+- [[+] Virtual stack initialization](#-virtual-stack-initialization)
+- [[+] Convoluted VM handlers](#-convoluted-vm-handlers)
+  - [1. Eye catching characteristics](#1-eye-catching-characteristics)
+  - [2. Opcode and operand](#2-opcode-and-operand)
+  - [3. Calculating next VM handler address](#3-calculating-next-vm-handler-address)
+- [[+] Devirtualize it](#-devirtualize-it)
+- [[+] Tracing RAX back](#-tracing-rax-back)
+- [Conclusion](#conclusion)
 ## About virtualization
 
 Virtualization is by far the strongest obfuscation done by transforming legit code into a custom bytecode that runs on a virtual machine (VM) embedded within the protected application.
@@ -72,7 +90,7 @@ By following these steps, you can disable ASLR and fix the image base across sys
 > also setting `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\kernel\MitigationOptions`'s third significant bit to 0 does the same thing in registry.
 {: .prompt-tip }
 
-## The binary's behavior
+## [+] The binary's behavior
 
 Knowing what the binary does is the most important thing to know when you reverse enginer software so that you can presume for instance what kind of Windows API you would expect to be called or where to start.
 This particular one is a very simple VMProtect sample, so it was as straightforward as just print out number `2` and pop up a messagebox with a word "wait".
@@ -370,7 +388,7 @@ jmp     rcx                       ; jmp
 ```
 {: file='example.asm'}
 
-#### 2. opcode and operand
+#### 2. Opcode and operand
 
 In previous section, I mentioned that opcodes and operands that VM utilizes are embeded as bytecodes, and `vip` is holding current position of bytecodes.
 Since we already discovered that `r10` is `vip`, let's follow how `r10` is used, shall we?
