@@ -37,12 +37,12 @@ Consider it a beginner's diary of grappling with advanced virtualization protect
 - [[+] Deadstore removal plugin](#-deadstore-removal-plugin)
 - [[+] Locate VIP initialization](#-locate-vip-initialization)
 - [[+] Virtual stack initialization](#-virtual-stack-initialization)
-- [[+] Convoluted VM handlers](#-convoluted-vm-handlers)
+- [[+] Dissect VM handlers](#-dissect-a-vm-handler)
   - [1. Eye catching characteristics](#1-eye-catching-characteristics)
   - [2. Opcode and operand](#2-opcode-and-operand)
   - [3. Calculating next VM handler address](#3-calculating-next-vm-handler-address)
 - [[+] Devirtualize it](#-devirtualize-it)
-- [[+] Tracing RAX back](#-tracing-rax-back)
+- [[+] Tracing RAX back](#-backward-slicing-rax)
 - [Conclusion](#conclusion)
 
 ## About virtualization
