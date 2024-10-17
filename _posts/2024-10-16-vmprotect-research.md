@@ -18,7 +18,6 @@ I've been totally hooked on it especially since understanding VMProtect has beco
 A couple of weeks ago, a friend of mine gave me a binary virtualized with VMProtect3.8.1, configured with 100% complexity + 10vms.
 Although I'm an absolute novice in this field, I always wanted to know about virtualization technique I finally decided to tackle on it and write a diary about how I get wrecked! lol
 
-In this blog post I'll write about what I saw and felt during analysis,
 In this blog post, I'll share my observations and experiences during the analysis process.
 While it will be a comprehensive exploration of VMProtect's features or an in-depth technical breakdown, as that'd be beyond my wheelhouse, it serves as an initial brief research.
 Consider it a beginner's diary of grappling with advanced virtualization protection.
