@@ -1,7 +1,7 @@
 ---
 title: "Behind the Hackathon: How We Won 1st Place and Overcame Challenges"
 date: 2024-09-15 14:06:00 +0900
-categories: [backend]
+categories: [web, backend]
 tags: [rust]
 img_path: /assets/img/posts/hackathon/
 image:

@@ -1,7 +1,7 @@
 ---
 title: How Game Cheaters Install Their Illegal Kernel Driver?
 date: 2024-06-26 14:06:00 +0900
-categories: [kernel]
+categories: [low level, kernel]
 tags: [cpp, kernel]     # TAG names should always be lowercase
 img_path: /assets/img/posts/how_game_cheaters_load_their_illegal_kernel_driver/
 image:

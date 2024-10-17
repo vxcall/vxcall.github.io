@@ -1,7 +1,7 @@
 ---
 title: Invoking Assembly Functions from MSVC-compiled x64 C++ Program
 date: 2023-12-06 14:06:00 +0900
-categories: [low level]
+categories: [low level, assembly]
 tags: [cpp, asm]     # TAG names should always be lowercase
 img_path: /assets/img/posts/invoking_assembly_functions_from_cpp/
 image:
