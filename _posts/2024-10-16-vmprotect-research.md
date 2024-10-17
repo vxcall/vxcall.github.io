@@ -43,6 +43,7 @@ Consider it a beginner's diary of grappling with advanced virtualization protect
 - [[+] Devirtualize it](#-devirtualize-it)
 - [[+] Tracing RAX back](#-tracing-rax-back)
 - [Conclusion](#conclusion)
+
 ## About virtualization
 
 Virtualization is by far the strongest obfuscation done by transforming legit code into a custom bytecode that runs on a virtual machine (VM) embedded within the protected application.
@@ -216,7 +217,7 @@ Apparently it treats them differently for registers and stack but since I didn't
 
 Moving on.
 
-## [+] Convoluted VM handlers
+## [+] Dissect a VM handler
 
 So far, we've looked at several VM initialization processes, but most virtualized functions consist of many VM handlers.
 I think each VM handlers are equivalent to x64 assembly instructions like `mov`, `add`, `xor`, `inc`, and so on.
@@ -582,7 +583,7 @@ Therefore, we can conclude that vm_entry is ultimately returning the value 2.
 It's because I don't want to be a dumb that's using tools blindly without thinking.
 {: .prompt-info }
 
-## [+] Tracing RAX back
+## [+] Backward slicing RAX
 
 So far, I reversed a couple of VM handlers but didn't fully grasp their purpose.
 
