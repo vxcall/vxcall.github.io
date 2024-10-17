@@ -227,8 +227,8 @@ However, because VMs have their own architecture, unlike normal instructions, ea
 Here, I've taken relatively simpler VM handler as a sample, and I'd like to examine it in detail.
 
 This represents one unit of a VM handler.
-I put some comments for you.
-Although it should semantically be a single routine, it's been chopped up into numerous basic blocks.
+I deliberately included the obfuscated version to show readers the actual disassembly.
+They should semantically be a single routine, though it's been chopped up into numerous basic blocks.
 
 Let's closely look at them!
 
