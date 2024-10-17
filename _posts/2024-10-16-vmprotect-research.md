@@ -35,12 +35,13 @@ Consider it a beginner's diary of grappling with advanced virtualization protect
 - [[+] Main function](#-main-function)
 - [[+] Confirm VM entry indication](#-confirm-vm-entry-indication)
 - [[+] Deadstore removal plugin](#-deadstore-removal-plugin)
-- [[+] Locate VIP initialization](#-locate-vip-initialization)
+- [[+] Locate vip initialization](#-locate-vip-initialization)
 - [[+] Virtual stack initialization](#-virtual-stack-initialization)
 - [[+] Dissect VM handlers](#-dissect-a-vm-handler)
   - [1. Eye catching characteristics](#1-eye-catching-characteristics)
   - [2. Opcode and operand](#2-opcode-and-operand)
   - [3. Calculating next VM handler address](#3-calculating-next-vm-handler-address)
+  - [4. Updating vip](#4-updating-vip)
 - [[+] Devirtualize it](#-devirtualize-it)
 - [[+] Tracing RAX back](#-backward-slicing-rax)
 - [Conclusion](#conclusion)
@@ -164,7 +165,7 @@ You can use it by placing cursor on the middle of a function in IDA and run the 
 ![deadstore-remover](deadstore_remover.png)
 _nop out deadstore, if the instruction made out of multipul bytes, it truncates them_
 
-## [+] Locate VIP initialization
+## [+] Locate vip initialization
 
 Many instructions in virtualized subroutines didn't make sense to me, which was both confusing and frustrating.
 I wasn't sure what to look for.
@@ -352,7 +353,7 @@ Let's closely look at them!
 
 As you can see, this code employs numerous disruptive techniques to obfuscate its components.
 
-Firstly, each memory access involves addition or subtraction operations with registers and constants to obscure offsets from static analysis.
+**Firstly**, each memory access involves addition or subtraction operations with registers and constants to obscure offsets from static analysis.
 This approach makes it challenging to predict exactly where the code is accessing memory.
 Moreover, it complicates the process of searching for specific disassembly by looking for byte sequences.
 Instead you have to code small tool with disassembler to find them I would say.
@@ -366,7 +367,7 @@ mov     rbp, [rbx+rax*2+42644C58h]
 ```
 {: file='example.asm'}
 
-Secondly, the code exits the current subroutine as soon as it encounters a `call` or `jmp` instruction.
+**Secondly**, the code exits the current subroutine as soon as it encounters a `call` or `jmp` instruction.
 Regardless of the subroutine's size, once it hits a `call` or `jmp`, it continues execution at another location, abandoning the rest of the current subroutine and never returning to where it left off.
 
 The image below illustrates how VM jumps around the text section.
@@ -375,7 +376,7 @@ The parts with yellow background is where it actually executed, and the rest of 
 ![jumping around](jumping_around.png)
 _execution flow is obscured by jumping around_
 
-Lastly, the code frequently uses indirect jumps with general registers such as `rax`, `rcx`, `r9` and so on.
+**Lastly**, the code frequently uses indirect jumps with general registers such as `rax`, `rcx`, `r9` and so on.
 A register to jump seems randomly selected for each jump.
 However, there's a unique pattern: the jump destination is always calculated by adding a constant to the return address pushed onto the top of the stack from the last call.
 
@@ -397,7 +398,7 @@ jmp     rcx                       ; jmp
 In previous section, I mentioned that opcodes and operands that VM utilizes are embeded as bytecodes, and `vip` is holding current position of bytecodes.
 Since we already discovered that `r10` is `vip`, let's follow how `r10` is used, shall we?
 
-Firstly a qword size value was extracted using`r10` and assined to `r11`.
+**Firstly** a qword size value was extracted using`r10` and assined to `r11`.
 The following is the all instructions involves `r11`.
 I'll explain it line by line
 
@@ -409,7 +410,7 @@ not     r11                            ; decryption
 bswap   r11                            ; decryption
 rol     r11, 2                         ; decryption
 neg     r11                            ; decryption
-xor     rdi, r11                       ; decryption done.
+xor     rdi, r11                       ; rolling decryption key update
 mov     [rbx+rax*2+42660008h], r11
 ```
 
@@ -432,7 +433,6 @@ xor     rdi, r11                       ; rolling decryption key update
 In the last line, the result of `[rbx+rax*2+42660008h]` points to a stack memory.
 And at that moment `r11` holds 0.
 So at the end of the day it's basically zeroing out a specific stack memory.
-
 At first glance, this operation may seem meaningless when viewed in isolation.
 However, this is actually initializing memory to zero, which will be used to store important calculation results that appear in the next 'Devirtualize it' section.
 
@@ -440,7 +440,7 @@ However, this is actually initializing memory to zero, which will be used to sto
 mov     [rbx+rax*2+42660008h], r11
 ```
 
-Secondly, `r10` is used here.
+**Secondly**, `r10` is used here.
 The first 7 lines are same as previous one.
 
 And it's hard to read because of the obfuscation but in last 4 lines, it's assigning some random value to the stack memory zeroed out last operation and load its address to `rbx`.
@@ -458,27 +458,6 @@ mov     rdx, [r8+rax+21330000h]
 mov     [rbx+r11*2-122h], rdx
 lea     rbx, [rdx+rbx-1Dh]
 ```
-
-The third instance where r10 is used is in calculating the offset for the next VM handler.
-We'll examine this in more detail later.
-
-Finally, `r10` is referenced at the following part:
-
-```nasm
-lea     r10, [r10+r11*2-12Fh]
-```
-
-This is where r10 is updated for use in the next VM handler.
-Up to this point, the VM has consumed 13 bytes from the memory region pointed to by r10.
-
-- 8 bytes for first use
-- 1 byte for second use
-- 4 bytes for third use which I skipped
-
-The calculation r11*2-12Fh results in -13, which precisely subtracts the number of bytes used in the current VM handler.
-
-> Some ginormous VM handlers actually update its `vip` multiple times within a handler.
-{: .prompt-tip }
 
 #### 3. Calculating next VM handler address
 
@@ -522,6 +501,28 @@ _concept image of vip load_
 This process reveals that the offset to the next VM handler is embedded near the `vip`.
 The virtualized function extracts and decrypts this value each time to calculate the offset to the next handler.
 This mechanism makes it challenging to statically analyze the code flow, as the next handler's location is dynamically determined at runtime.
+
+#### 4. Updating vip
+
+At last, `r10` gets updated according to the bytes that were used in this handler.
+Following is where r10 is updated for use in the next VM handler.
+
+```nasm
+; r11*2-12Fh is -13
+lea     r10, [r10+r11*2-12Fh]
+```
+
+Up to this point, the VM has consumed 13 bytes from the memory region pointed to by r10.
+
+- 8 bytes for operation
+- 1 byte for operation
+- 4 bytes for offset to the next vm handler
+
+The calculation `r11*2-12Fh` results in -13, which precisely subtracts the number of bytes used in the current VM handler.
+
+> Some ginormous VM handlers actually update its `vip` multiple times within a handler.
+{: .prompt-tip }
+
 
 ## [+] Devirtualize it
 
