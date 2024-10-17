@@ -12,13 +12,16 @@ image:
 
 ## Introduction
 
-Virtualization is one of the most hard-to-break protection techniques employed widely by both legitimate and malicious applications.
-And I'm totally hooked on it because knowing vmprotect is getting paramount in 2024 to reverse engineer softwares with robust security like anti-cheat software.
+Virtualization stands as one of the most formidable protection techniques, widely employed by both legitimate and malicious applications.
+I've been totally hooked on it especially since understanding VMProtect has become paramount in 2024 for reverse engineering software with robust security measures, such as anti-cheat systems.
 
-A couple of weeks ago, a friend of mine gave me a binary virtualized with VMProtect3.8.1 with 100% complexity + 10vms.
-Although I'm an absolute newbie in this field, I always wanted to know about virtualization technique I finally decided to tackle on it and write a diary about how I get wrecked! lol
+A couple of weeks ago, a friend of mine gave me a binary virtualized with VMProtect3.8.1, configured with 100% complexity + 10vms.
+Although I'm an absolute novice in this field, I always wanted to know about virtualization technique I finally decided to tackle on it and write a diary about how I get wrecked! lol
 
-In this blog post I'll write about what I saw and felt during analysis, it's neither something covers entire VMProtect's feature nor in-depth, but more like initial brief research to get used to it. Cuz that'd be beyond my wheelhouse.
+In this blog post I'll write about what I saw and felt during analysis,
+In this blog post, I'll share my observations and experiences during the analysis process.
+While it will be a comprehensive exploration of VMProtect's features or an in-depth technical breakdown, as that'd be beyond my wheelhouse, it serves as an initial brief research.
+Consider it a beginner's diary of grappling with advanced virtualization protection.
 
 > This article might be too rudimentary for those who ever dealt with VMProtect before. Also there might be misunderstandings, forgive me I'm not a professional.
 {: .prompt-warning }
@@ -363,7 +366,7 @@ mov     rbp, [rbx+rax*2+42644C58h]
 {: file='example.asm'}
 
 Secondly, the code exits the current subroutine as soon as it encounters a `call` or `jmp` instruction.
-Regardless of the subroutine's size, once it hits a `call` or `jmp`, it continues execution at another location, abandoning the rest of the current subroutine and never returning to where it left off. 
+Regardless of the subroutine's size, once it hits a `call` or `jmp`, it continues execution at another location, abandoning the rest of the current subroutine and never returning to where it left off.
 
 The image below illustrates how VM jumps around the text section.
 The parts with yellow background is where it actually executed, and the rest of them are not in entire execution.
@@ -508,7 +511,7 @@ xor     eax, 8F8E1812h                 ; decryption
 not     eax                            ; decryption
 ```
 
-The initial value of `eax` is loaded from 13 bytes before the current `vip` (virtual instruction pointer). 
+The initial value of `eax` is loaded from 13 bytes before the current `vip` (virtual instruction pointer).
 The image below is the actual value in my sample around `vip`.
 So in first instruction `0x5F17544C` is assigned to `eax`, it then goes through a series of decryption steps as shown above and consequently becomes `0x5ecd6741`. An interesting fact is that only when VM handler calculates next handler's offset, it doesn't decrypt rolling key. I confirmed it in every handlers.
 
