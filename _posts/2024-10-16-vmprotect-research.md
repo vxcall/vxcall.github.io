@@ -1,4 +1,5 @@
 ---
+pin: true
 title: Let's Get Rekt by a VMProtected Binary with 100% Complexity
 date: 2024-10-6 23:00:00 +0900
 categories: [reverse engineering, devirtualization]
