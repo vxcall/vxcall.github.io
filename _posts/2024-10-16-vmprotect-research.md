@@ -69,7 +69,7 @@ So this was what you should know before diving into the actual contents!
 ## Let's get rect!
 
 Upon writing this post, I had read a couple of papers and articles, also I peeked at VMProtect2 binary a bit before so I had a general idea of where to start.
-Moreover my friend told me where the VM begins, people call it vm_entry, so that will also be a starting point.
+Moreover my friend told me where the VM begins, people call it VM entry, so that will also be a starting point.
 
 But still, the binary is virtualized with 100% complexity, it could be more and more complicated than what I expect of course.
 
@@ -110,10 +110,10 @@ Right off the bat, look at the main function.
 ![main](main.png)
 _main function_
 
-Subroutine marked as vm_entry is the virtualized subroutine.
+Subroutine marked as `vm_entry` is the virtualized subroutine.
 And it's printing out the return value which I assume is 2.
 
-Also just before entering vm_entry, the code assigning values to three registers and vm_entry is recieving the value as parameters.
+Also just before entering `vm_entry`, the code assigning values to three registers and `vm_entry` is recieving the value as parameters.
 
 ```nasm
 mov     r8d, 3
@@ -135,11 +135,11 @@ I'm unsure whether this is related to VMProtect's operations or not.
 ![vm_entry](vm_entry.png)
 _VM entry_
 
-Btw in the nature of vm_entry, it should have a specific initialization process.
+Btw in the nature of VM entry, it should have a specific initialization process.
 Since it's going to use general registers in its vm, it first push all the registers to stack to preserve the current state for later.
 Based on my experience of VMProtect2, I overconfidently thought 'This should be easy' and ended up learning a painful lesson.
 
-In VMProtect3, the contents of vm_entry were finely chopped up, and it seemed that a single operation was performed through multiple functions.
+In VMProtect3, the contents of VM entry were finely chopped up, and it seemed that a single operation was performed through multiple functions.
 In the VMProtect2 I had seen before, all register pushes were done in a single function, but this time even the pushes were divided into multiple functions and basic blocks, making it very difficult to search through
 
 I eventually managed to find it, as I mentioned, it was all separated.
@@ -378,7 +378,7 @@ _execution flow is obscured by jumping around_
 
 **Lastly**, the code frequently uses indirect jumps with general registers such as `rax`, `rcx`, `r9` and so on.
 A register to jump seems randomly selected for each jump.
-However, there's a unique pattern: the jump destination is always calculated by adding a constant to the return address pushed onto the top of the stack from the last call.
+However, there's a unique pattern: the jump destination is always calculated by adding a constant to the return address pushed onto the top of the stack from the last `call` instruction.
 
 ```nasm
 pop     rax                       ; rax gets return address 0xCBACE
@@ -563,7 +563,7 @@ attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memor
 {: file='output.llvm'}
 
 As you can see it's basically performing `rcx - rdx + r8` and returning the result.
-These registers look familiar because they're the ones initialized just before entering vm_entry.
+These registers look familiar because they're the ones initialized just before entering `vm_entry`.
 
 To recap, their values are:
 
@@ -579,7 +579,7 @@ Plugging these values into the equation, we get:
 1 - 2 + 3 = 2
 ```
 
-Therefore, we can conclude that vm_entry is ultimately returning the value 2.
+Therefore, we can conclude that the virtualized subroutine is ultimately returning the value 2.
 
 > I know what you thinking. "Why would you be suffered from reversing virtualized code when you can devirtualize it with a tool?"
 It's because I don't want to be a dumb that's using tools blindly without thinking.
