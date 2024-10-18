@@ -43,7 +43,7 @@ Consider it a beginner's diary of grappling with advanced virtualization protect
   - [3. Calculating next VM handler address](#3-calculating-next-vm-handler-address)
   - [4. Updating vip](#4-updating-vip)
 - [[+] Devirtualize it](#-devirtualize-it)
-- [[+] Tracing RAX back](#-backward-slicing-rax)
+- [[+] Backward slicing RAX](#-backward-slicing-rax)
 - [Conclusion](#conclusion)
 
 ## About virtualization
