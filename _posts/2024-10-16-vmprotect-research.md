@@ -1,6 +1,6 @@
 ---
 pin: true
-title: Let's Get Rekt by a VMProtected Binary with 100% Complexity
+title: Let's Get Rekt by a VMProtect 3.8.1 with 100% Complexity
 date: 2024-10-6 23:00:00 +0900
 categories: [reverse engineering, deobfuscation]
 tags: [asm, reverse-engineering, deobfuscation, devirtualization]
@@ -512,7 +512,7 @@ Following is where r10 is updated for use in the next VM handler.
 lea     r10, [r10+r11*2-12Fh]
 ```
 
-Up to this point, the VM has consumed 13 bytes from the memory region pointed to by r10.
+Up to this point, the VM has consumed 13 bytes from the memory region pointed to by `r10`.
 
 - 8 bytes for operation
 - 1 byte for operation
