@@ -49,15 +49,15 @@ Consider it a beginner's diary of grappling with advanced virtualization protect
 ## About virtualization
 
 Virtualization is by far the strongest obfuscation done by transforming legit code into a custom bytecode that runs on a virtual machine (VM) embedded within the protected application.
-The virtual machine that runs in the application typically has a proprietary architecture that the static disassembler like IDA doesn't recognize the bytecode(original code) as meaningful instructions and ended up with just showing chunks of bytes.
+The virtual machine that runs in the application typically has a proprietary architecture that the static disassembler like IDA doesn't recognize the bytecode(original code) as meaningful instructions and ended up with just showing a big chunk of bytes.
 I'll show you the actual image of IDA's disassembler view of it later.
 
 Among a couple of softwares that have virtualization capabilities, this time I'll take a look at a binary compromised with VMProtect version 3.8.1.
 VMProtect is an infamous software known for its strong protection techniques being developed by Russian firm, VMProtect Software.
 It applies not only virtualization to software but other obfuscation techniques such as deadstores insertion, opaque predicates, indirect jmp, stack manipulation...you name it!
 
-VMProtect is does bin2bin[^bin2bin] obfuscation. it eats the original binary and spits out a new binary with a VM embedded in it.
-VMProtect has been updated frequently and considering the latest version as of now is 3.9, version 3.8.1 (the one my binary was virtualized with) is pretty new I'd say.
+VMProtect is a bin2bin[^bin2bin] type of obfuscator. It eats the original binary and spits out a new binary with a VM embedded in it.
+VMProtect has been updated frequently and considering the latest version as of now is 3.9, version 3.8.1 is pretty new I'd say.
 
 Following figure is showing the brief overview of VMProtect.
 
@@ -68,7 +68,7 @@ So this was what you should know before diving into the actual contents!
 
 ## Let's get rect!
 
-Upon writing this post, I had read a couple of papers and articles, also I peeked (wouldn't say analyse tho lol) at VMProtect2 binary a bit before so I had a general idea of where to start.
+Upon writing this post, I had read a couple of papers and articles, also I peeked at VMProtect2 binary a bit before so I had a general idea of where to start.
 Moreover my friend told me where the VM begins, people call it vm_entry, so that will also be a starting point.
 
 But still, the binary is virtualized with 100% complexity, it could be more and more complicated than what I expect of course.
@@ -189,7 +189,7 @@ _virtual instruction pointer is being decrypted_
 And following is where the ptr was pointing to.
 
 ![bytecode](bytecode.png)
-_this is what VMProtect custom bytecodes look like_
+_this is what VMProtect custom bytecode look like_
 
 To confirm that I had indeed found the correct pointer, I continued debugging and looked for instructions that used `r10`.
 Eventually, I found the part where it retrieves a byte from `vip`-7 and moves the `vip` forward.
@@ -395,7 +395,7 @@ jmp     rcx                       ; jmp
 
 #### 2. Opcode and operand
 
-In previous section, I mentioned that opcodes and operands that VM utilizes are embeded as bytecodes, and `vip` is holding current position of bytecodes.
+In previous section, I mentioned that opcodes and operands that VM utilizes are embeded as bytecode, and `vip` is holding current position of bytecode.
 Since we already discovered that `r10` is `vip`, let's follow how `r10` is used, shall we?
 
 **Firstly** a qword size value was extracted using`r10` and assined to `r11`.
