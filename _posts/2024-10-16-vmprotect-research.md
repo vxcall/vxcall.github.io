@@ -1,6 +1,6 @@
 ---
 pin: true
-title: Let's Get Rekt by a VMProtect 3.8.1 with 100% Complexity
+title: Let's Get Rekt by VMProtect 3.8.1 with 100% Complexity
 date: 2024-10-6 23:00:00 +0900
 categories: [reverse engineering, deobfuscation]
 tags: [asm, reverse-engineering, deobfuscation, devirtualization]
