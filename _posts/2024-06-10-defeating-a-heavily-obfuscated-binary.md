@@ -6,7 +6,7 @@ categories: [reverse engineering, deobfuscation]
 tags: [asm, reverse-engineering, deobfuscation]
 img_path: /assets/img/posts/defeating_a_heavily_obfuscated_keygenme_binary/
 image:
-  path: header.png
+  path: header.jpg
   lqip: /assets/img/posts/defeating_a_heavily_obfuscated_keygenme_binary/header.svg
   alt: header
 ---
