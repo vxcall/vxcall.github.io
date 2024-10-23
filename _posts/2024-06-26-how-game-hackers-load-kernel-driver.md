@@ -325,8 +325,6 @@ Hence, you have to learn, reverse engineer anti cheat and know what it's monitor
 
 ## Conclusion
 
-![footer](footer.jpg)
-
 I believe kdmapper is very powerful and still widely used method among game hackers.
 However, to utilize it and detour anti cheat's check, u have to strive to make your driver look legetimate process.
 
