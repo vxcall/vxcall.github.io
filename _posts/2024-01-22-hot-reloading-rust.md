@@ -5,7 +5,7 @@ categories: [web, backend]
 tags: [docker, rust]
 img_path: /assets/img/posts/hot_reloading_rust_blazingly_fast_with_docker_and_mold/
 image:
-  path: header.png
+  path: header.jpg
   lqip: /assets/img/posts/hot_reloading_rust_blazingly_fast_with_docker_and_mold/header.svg
   alt: header
 ---

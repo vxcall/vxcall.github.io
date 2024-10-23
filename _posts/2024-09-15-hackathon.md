@@ -5,7 +5,7 @@ categories: [web, backend]
 tags: [rust]
 img_path: /assets/img/posts/hackathon/
 image:
-  path: header.jpg
+  path: header.png
   lqip: /assets/img/posts/hackathon/header.svg
   alt: header
 ---
