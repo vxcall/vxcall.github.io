@@ -4,7 +4,7 @@
 
 @mixin dark-syntax {
   --language-border-color: #2d2d2d;
-  --highlight-bg-color: #151515;
+  --highlight-bg-color: #282a36; // code sections header bg color. for dracula theme
   --highlighter-rouge-color: #c9def1;
   --highlight-lineno-color: #808080;
   --inline-code-bg: rgba(255, 255, 255, 0.05);
@@ -15,150 +15,155 @@
   --clipboard-checked-color: #2bcc2b;
   --filepath-text-color: #cacaca;
 
-  .highlight .gp {
-    color: #87939d;
-  }
+  /* --- Syntax highlight theme from `rougify style base16.dark` you can get other css from http://jwarby.github.io/jekyll-pygments-themes/languages/java.html and paste them here --- */
 
-  /* --- Syntax highlight theme from `rougify style base16.dark` --- */
 
-  .highlight table td {
-    padding: 5px;
-  }
+  $dt-gray-dark: #282a36;  // Background
+  $dt-gray: #000000;       // Current Line & Selection
+  $dt-gray-light: #f8f8f2; // Foreground
+  $dt-blue: #6272a4;       // Comment
+  $dt-cyan: #8be9fd;
+  $dt-green: #50fa7b;
+  $dt-orange: #ffb86c;
+  $dt-pink: #ff79c6;
+  $dt-purple: #bd93f9;
+  $dt-red: #ff5555;
+  $dt-yellow: #f1fa8c;
 
-  .highlight table pre {
-    margin: 0;
-  }
+  /*
+   * Styles
+   */
 
-  .highlight,
-  .highlight .w {
-    color: #d0d0d0;
-    background-color: #151515;
-  }
+  .highlight {
+    background: $dt-gray-dark;
+    color: $dt-gray-light;
 
-  .highlight .err {
-    color: #151515;
-    background-color: #ac4142;
-  }
+    .hll,
+    .s,
+    .sa,
+    .sb,
+    .sc,
+    .dl,
+    .sd,
+    .s2,
+    .se,
+    .sh,
+    .si,
+    .sx,
+    .sr,
+    .s1,
+    .ss {
+      color: $dt-yellow;
+    }
 
-  .highlight .c,
-  .highlight .ch,
-  .highlight .cd,
-  .highlight .cm,
-  .highlight .cpf,
-  .highlight .c1,
-  .highlight .cs {
-    color: #848484;
-  }
+    .go {
+      color: $dt-gray;
+    }
 
-  .highlight .cp {
-    color: #f4bf75;
-  }
+    .err,
+    .g,
+    .l,
+    .n,
+    .x,
+    .p,
+    .ge,
+    .gr,
+    .gh,
+    .gi,
+    .gp,
+    .gs,
+    .gu,
+    .gt,
+    .ld,
+    .no,
+    .nd,
+    .ni,
+    .ne,
+    .nn,
+    .nx,
+    .py,
+    .w,
+    .bp {
+      color: $dt-gray-light;
+    }
 
-  .highlight .nt {
-    color: #f4bf75;
-  }
+    .gh,
+    .gi,
+    .gu {
+      font-weight: bold;
+    }
 
-  .highlight .o,
-  .highlight .ow {
-    color: #d0d0d0;
-  }
+    .ge {
+      text-decoration: underline;
+    }
 
-  .highlight .p,
-  .highlight .pi {
-    color: #d0d0d0;
-  }
+    .bp {
+      font-style: italic;
+    }
 
-  .highlight .gi {
-    color: #90a959;
-  }
+    .c,
+    .ch,
+    .cm,
+    .cpf,
+    .c1,
+    .cs {
+      color: $dt-blue;
+    }
 
-  .highlight .gd {
-    color: #f08a8b;
-    background-color: #320000;
-  }
+    .kd,
+    .kt,
+    .nb,
+    .nl,
+    .nv,
+    .vc,
+    .vg,
+    .vi,
+    .vm {
+      color: $dt-cyan;
+    }
 
-  .highlight .gh {
-    color: #6a9fb5;
-    background-color: #151515;
-    font-weight: bold;
-  }
+    .kd,
+    .nb,
+    .nl,
+    .nv,
+    .vc,
+    .vg,
+    .vi,
+    .vm {
+      font-style: italic;
+    }
 
-  .highlight .k,
-  .highlight .kn,
-  .highlight .kp,
-  .highlight .kr,
-  .highlight .kv {
-    color: #aa759f;
-  }
+    .na,
+    .nc,
+    .nf,
+    .fm {
+      color: $dt-green;
+    }
 
-  .highlight .kc {
-    color: #d28445;
-  }
+    .k,
+    .o,
+    .cp,
+    .kc,
+    .kn,
+    .kp,
+    .kr,
+    .nt,
+    .ow {
+      color: $dt-pink;
+    }
 
-  .highlight .kt {
-    color: #d28445;
-  }
+    .m,
+    .mb,
+    .mf,
+    .mh,
+    .mi,
+    .mo,
+    .il {
+      color: $dt-purple;
+    }
 
-  .highlight .kd {
-    color: #d28445;
-  }
-
-  .highlight .s,
-  .highlight .sb,
-  .highlight .sc,
-  .highlight .dl,
-  .highlight .sd,
-  .highlight .s2,
-  .highlight .sh,
-  .highlight .sx,
-  .highlight .s1 {
-    color: #90a959;
-  }
-
-  .highlight .sa {
-    color: #aa759f;
-  }
-
-  .highlight .sr {
-    color: #75b5aa;
-  }
-
-  .highlight .si {
-    color: #b76d45;
-  }
-
-  .highlight .se {
-    color: #b76d45;
-  }
-
-  .highlight .nn {
-    color: #f4bf75;
-  }
-
-  .highlight .nc {
-    color: #f4bf75;
-  }
-
-  .highlight .no {
-    color: #f4bf75;
-  }
-
-  .highlight .na {
-    color: #6a9fb5;
-  }
-
-  .highlight .m,
-  .highlight .mb,
-  .highlight .mf,
-  .highlight .mh,
-  .highlight .mi,
-  .highlight .il,
-  .highlight .mo,
-  .highlight .mx {
-    color: #90a959;
-  }
-
-  .highlight .ss {
-    color: #90a959;
+    .gd {
+      color: $dt-red;
+    }
   }
 }
