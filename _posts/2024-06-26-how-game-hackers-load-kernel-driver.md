@@ -75,6 +75,7 @@ Its mapping process can be broken down into those steps:
 - manually calls your DriverEntry
 
 #### loads iqvw64e.sys
+
 First, it loads `iqvw64e.sys` inside [service::RegisterAndStart](https://github.com/TheCruZ/kdmapper/blob/30f3282a2c0e867ab24180fccfc15cc9b819ebea/kdmapper/service.cpp#L3) function. It sets up corresponding registries first and then uses native NT API NtLoadDriver like this.
 
 ```cpp
