@@ -74,7 +74,7 @@ Its mapping process can be broken down into those steps:
 - maps your driver into kernel space
 - manually calls your DriverEntry
 
-#### loads iqvw64e.sys
+#### Loads iqvw64e.sys
 
 First, it loads `iqvw64e.sys` inside [service::RegisterAndStart](https://github.com/TheCruZ/kdmapper/blob/30f3282a2c0e867ab24180fccfc15cc9b819ebea/kdmapper/service.cpp#L3) function. It sets up corresponding registries first and then uses native NT API NtLoadDriver like this.
 
@@ -100,7 +100,7 @@ Status = NtLoadDriver(&serviceStr);
 ```
 {: file='kdmapper/service.cpp'}
 
-#### removes it's trace for additional stealthiness
+#### Removes it's trace for additional stealthiness
 
 After that it tries to remove some traces that anti-cheat is checking in [intel_driver::Load()](https://github.com/TheCruZ/kdmapper/blob/30f3282a2c0e867ab24180fccfc15cc9b819ebea/kdmapper/intel_driver.cpp#L32).
 
@@ -146,7 +146,7 @@ if (!intel_driver::ClearWdFilterDriverList(result)) {
 {: file='kdmapper/intel_driver.cpp'}
 
 
-#### reads raw data of your kernel driver into memory
+#### Reads raw data of your kernel driver into memory
 
 Then it read your binary data into memory to calculate image size and header size from its nt header.
 
@@ -174,7 +174,7 @@ image_size = image_size - (destroyHeader ? TotalVirtualHeaderSize : 0);
 ```
 {: file='kdmapper/main.cpp'}
 
-#### maps your driver into kernel space
+#### Maps your driver into kernel space
 
 [kdmapper::MapDriver](https://github.com/TheCruZ/kdmapper/blob/30f3282a2c0e867ab24180fccfc15cc9b819ebea/kdmapper/kdmapper.cpp#L73) function is responsible of actual driver mapping.
 
@@ -195,7 +195,7 @@ if (!intel_driver::WriteMemory(iqvw64e_device_handle, realBase, (PVOID)((uintptr
 {: file='kdmapper/kdmapper.cpp'}
 
 
-#### manually calls your DriverEntry
+#### Manually calls your DriverEntry
 
 Finally it calls your custom DriverEntry.
 
