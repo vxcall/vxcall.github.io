@@ -6,7 +6,7 @@ tags: [cpp, kernel]     # TAG names should always be lowercase
 media_subpath: /assets/img/posts/how_game_cheaters_load_their_illegal_kernel_driver/
 image:
   path: header.jpg
-  lqip: /assets/img/posts/how_game_cheaters_load_their_illegal_kernel_driver/header.svg
+  lqip: header.svg
   alt: header
 ---
 

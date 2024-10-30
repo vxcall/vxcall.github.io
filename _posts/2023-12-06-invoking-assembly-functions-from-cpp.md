@@ -6,7 +6,7 @@ tags: [cpp, asm]     # TAG names should always be lowercase
 media_subpath: /assets/img/posts/invoking_assembly_functions_from_cpp/
 image:
   path: header.jpg
-  lqip: /assets/img/posts/invoking_assembly_functions_from_cpp/header.svg
+  lqip: header.svg
   alt: header
 ---
 

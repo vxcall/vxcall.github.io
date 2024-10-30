@@ -7,7 +7,7 @@ tags: [asm, reverse-engineering, deobfuscation, devirtualization]
 media_subpath: /assets/img/posts/vmprotect-research/
 image:
   path: header.jpg
-  lqip: /assets/img/posts/vmprotect-research/header.svg
+  lqip: header.svg
   alt: header
 ---
 

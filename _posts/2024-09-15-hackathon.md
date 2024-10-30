@@ -6,7 +6,7 @@ tags: [rust]
 media_subpath: /assets/img/posts/hackathon/
 image:
   path: header.png
-  lqip: /assets/img/posts/hackathon/header.svg
+  lqip: header.svg
   alt: header
 ---
 

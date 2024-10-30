@@ -6,7 +6,7 @@ tags: [docker, rust]
 media_subpath: /assets/img/posts/hot_reloading_rust_blazingly_fast_with_docker_and_mold/
 image:
   path: header.jpg
-  lqip: /assets/img/posts/hot_reloading_rust_blazingly_fast_with_docker_and_mold/header.svg
+  lqip: header.svg
   alt: header
 ---
 

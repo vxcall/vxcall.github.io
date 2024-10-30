@@ -6,7 +6,7 @@ tags: [csharp, cheat]
 media_subpath: /assets/img/posts/exploring_the_fundamentals_of_hacking_unity_games/
 image:
   path: header.png
-  lqip: /assets/img/posts/exploring_the_fundamentals_of_hacking_unity_games/header.svg
+  lqip: header.svg
   alt:
 ---
 
