@@ -5,7 +5,7 @@ categories: [web, backend]
 tags: [docker, rust]
 media_subpath: /assets/img/posts/hot_reloading_rust_blazingly_fast_with_docker_and_mold/
 image:
-  path: header.jpg
+  path: header.png
   lqip: header.svg
   alt: header
 ---
@@ -179,6 +179,8 @@ Everythings ready, now you run `docker compose up --build -d` and you have full-
 ~~Only one drawback I would say is that it takes while to build the container when start up cuz it's building mold entirely from source code. I'm sure there's ways to lower the time tho.~~ I did a performance optimization, therefore it should be pretty quick.
 
 ## Conclusion
+
+![comparison](footer.jpg)
 
 We've explored a powerful way to speed up Rust development by using Docker, cargo-watch, and mold. This setup significantly reduces waiting times for code recompilation, making your development process much faster and more efficient.
 
