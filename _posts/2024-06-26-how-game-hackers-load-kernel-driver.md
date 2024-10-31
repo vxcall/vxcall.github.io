@@ -5,7 +5,7 @@ categories: [low level, kernel]
 tags: [cpp, kernel]     # TAG names should always be lowercase
 media_subpath: /assets/img/posts/how_game_cheaters_load_their_illegal_kernel_driver/
 image:
-  path: header.jpg
+  path: header.png
   lqip: header.svg
   alt: header
 ---
@@ -325,6 +325,8 @@ It's all require of practice and try-error process
 Hence, you have to learn, reverse engineer anti cheat and know what it's monitoring.
 
 ## Conclusion
+
+![footer](footer.jpg)
 
 I believe kdmapper is very powerful and still widely used method among game hackers.
 However, to utilize it and detour anti cheat's check, u have to strive to make your driver look legetimate process.
