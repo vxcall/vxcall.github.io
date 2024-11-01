@@ -305,4 +305,6 @@ _resulting ESP. green indicates items and red indicates enemies_
 
 ## Conclusion
 
+![footer](footer.png)
+
 Honestly, I might not be gonna get along with C# any further. However I've been wanting to scratch the surface of Mono hacking once in my life. Indeed it was absolutely fresh experience from what I've been done with C++ and fun to manipulate game as if I'm modifying game's source code directly.
