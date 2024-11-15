@@ -16,7 +16,7 @@ timezone: Asia/Tokyo
 
 title: KeEnter GuardedRegion # the main title
 
-tagline: articles for you without interruption <3 # it will display as the subtitle
+tagline: articles for you without interruption # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
   a reverse engineer's diary
