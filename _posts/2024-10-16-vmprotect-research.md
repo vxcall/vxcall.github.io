@@ -416,9 +416,9 @@ mov     [rbx+rax*2+42660008h], r11
 
 Look at this decryption routine closely.
 In this VM, the `rdi` register plays a crucial role as the rolling decryption key.
-The values embedded in the bytecode field are self-encrypted
+The values embedded in the bytecode field are self-encrypted.
 Therefore extracted value using `vip` always gets decrypted, and the rolling decryption key is responsible for initiating the first step in a series of decryption procedures.
-A consistent pattern throughout VM is that once a decryption operation is completed, the rolling decryption key is updated using the newly extracted value.
+A consistent pattern throughout VM is that once a decryption operation is completed, the rolling decryption key is updated as well using the newly extracted value.
 
 ```nasm
 xor     r11, rdi                       ; decryption starts
@@ -619,6 +619,12 @@ Throughout this research, I've uncovered some interesting techniques and tendenc
 While I've gained a basic understanding of what's happening in these virtualized routines, more advanced tasks like patching and hooking virtualized functions, or recompiling to a fully devirtualized binary, remain significant challenges that I'll need to tackle in the future.
 
 But thanks to this research I'm pretty sure I'll be capable of it one day.
+
+## References
+
+Zakocs, M. (2021) Title, Mitchell Zakocs. Available at: [https://www.mitchellzakocs.com/blog/vmprotect3](https://www.mitchellzakocs.com/blog/vmprotect3)
+
+IDONTCODE (2021) VMPROTECT 2 - detailed analysis of the Virtual Machine Architecture, Private Group Of Back Engineers. Available at: [https://blog.back.engineering/17/05/2021/](https://blog.back.engineering/17/05/2021/)
 
 ## Footnotes
 
