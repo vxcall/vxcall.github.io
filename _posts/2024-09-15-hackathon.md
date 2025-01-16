@@ -1,5 +1,5 @@
 ---
-title: "Behind the Hackathon: How We Won 1st Place and Overcame Challenges"
+title: "We Won 1st Place at Hackathon!"
 date: 2024-09-15 14:06:00 +0900
 categories: [web, backend]
 tags: [rust]
