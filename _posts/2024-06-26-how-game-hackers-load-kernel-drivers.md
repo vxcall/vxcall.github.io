@@ -279,8 +279,51 @@ I'm going to demonstrate how to map your kernel driver using kdmapper here.
 
 Right off the bat, get or build kdmapper.exe in whatever way.
 
-Next, build your driver. Suppose you have desired kernel driver source loaded in Visual Studio.
-Go to project settings of kernel driver and configure the entry point.
+Next, build your driver. There're 3 things you have to take care.
+- Your DriverEntry's parameters will be NULL
+- Memory region your driver is going to be mapped might be very different than normal drivers
+- You have to change the entrypoint of your driver
+
+### Your DriverEntry's parameters will be NULL
+
+Since kdmapper get rid of DriveerObject and RegistryPath, you can't use them in your code.
+Make sure you consume it with UNREFERENCED_PARAMETER like so.
+
+```cpp
+#include <ntddk.h>
+
+extern "C" NTSTATUS DriverEntry(
+	_In_ PDRIVER_OBJECT  driver_object,
+	_In_ PUNICODE_STRING registry_path
+)
+{
+	UNREFERENCED_PARAMETER(driver_object);
+	UNREFERENCED_PARAMETER(registry_path);
+
+	return 0;
+}
+```
+
+This means you're not able to neither register DriverUnload nor IOCTLs.
+Go other way around or maybe create a new driver object with IoCreateDriver.
+
+### Memory region your driver is going to be mapped might be very different than normal drivers
+
+Not really digged into it but the driver that manual mapped with kdmapper is tend to be allocated at very low address. Therefore your pointer calculations against some system component done in your code might be disabled.
+
+More specifically something like `hk_SyscallFunc - KiServiceTable` might result negative value which leads your code dependes on this will be pointless. (syscall hook is not used lately so this is not a good example but you know the drill)
+
+### You have to change the entrypoint of your driver
+
+kdmapper will call your driver entry manually, and it requires you to change your entrypoint name from default to yours.
+
+if you are using cmake with FindWDK, add this line at the bottom of your CMakeLists.txt
+
+```
+set_target_properties(${YOUR_TARGET_NAME} PROPERTIES LINK_FLAGS "/ENTRY:DriverEntry")
+```
+
+If you're using Visual Studio, go to project settings of kernel driver and configure the entry point.
 
 - Configuration Properties
   - Linker
