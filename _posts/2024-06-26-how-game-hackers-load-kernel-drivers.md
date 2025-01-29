@@ -280,13 +280,14 @@ I'm going to demonstrate how to map your kernel driver using kdmapper here.
 Right off the bat, get or build kdmapper.exe in whatever way.
 
 Next, build your driver. There're 3 things you have to take care.
+
 - Your DriverEntry's parameters will be NULL
-- Memory region your driver is going to be mapped might be very different than normal drivers
+- Your driver will be located at very different address than normal drivers
 - You have to change the entrypoint of your driver
 
 ### Your DriverEntry's parameters will be NULL
 
-Since kdmapper get rid of DriveerObject and RegistryPath, you can't use them in your code.
+Since kdmapper gets rid of DriveerObject and RegistryPath, you can't use them in your code.
 Make sure you consume it with UNREFERENCED_PARAMETER like so.
 
 ```cpp
@@ -307,7 +308,7 @@ extern "C" NTSTATUS DriverEntry(
 This means you're not able to neither register DriverUnload nor IOCTLs.
 Go other way around or maybe create a new driver object with IoCreateDriver.
 
-### Memory region your driver is going to be mapped might be very different than normal drivers
+### Your driver will be located at very different address than normal drivers
 
 Not really digged into it but the driver that manual mapped with kdmapper is tend to be allocated at very low address. Therefore your pointer calculations against some system component done in your code might be disabled.
 
