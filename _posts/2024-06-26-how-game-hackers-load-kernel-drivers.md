@@ -281,9 +281,32 @@ Right off the bat, get or build kdmapper.exe in whatever way.
 
 Next, build your driver. There're 3 things you have to take care.
 
-- Your DriverEntry's parameters will be NULL
-- Your driver will be located at very different address than normal drivers
 - You have to change the entrypoint of your driver
+- Your DriverEntry's parameters will be NULL
+- You're not able to use SEH for error handling
+- Your driver will be located at very different address than normal drivers
+
+### You have to change the entrypoint of your driver
+
+kdmapper will call your driver entry manually, and it requires you to change your entrypoint name from default to yours.
+
+if you are using cmake with FindWDK, add this line at the bottom of your CMakeLists.txt
+
+```
+set_target_properties(${YOUR_TARGET_NAME} PROPERTIES LINK_FLAGS "/ENTRY:DriverEntry")
+```
+
+If you're using Visual Studio, go to project settings of kernel driver and configure the entry point.
+
+- Configuration Properties
+  - Linker
+    - All Options
+      - ✅ Entry Point -> DriverEntry
+
+It initially should be GsDriverEntry. To let kdmapper call your custom driver entry point, **u need to rename it to DriverEntry**.
+
+![custom_entry_point](custom_entry_point.png)
+_Entry Point setting_
 
 ### Your DriverEntry's parameters will be NULL
 
@@ -308,34 +331,21 @@ extern "C" NTSTATUS DriverEntry(
 This means you're not able to neither register DriverUnload nor IOCTLs.
 Go other way around or maybe create a new driver object with IoCreateDriver.
 
+### You're not able to use SEH for error handling
+
+SEH disability is another pain when it comes to kernel driver development.
+This happens because kdmapper doesnt register your exception handling data to InvertedFunctionTable.
+
+Im not sure but I recon you have not many options to go around.
+
 ### Your driver will be located at very different address than normal drivers
 
 Not really digged into it but the driver that manual mapped with kdmapper is tend to be allocated at very low address. Therefore your pointer calculations against some system component done in your code might be disabled.
 
 More specifically something like `hk_SyscallFunc - KiServiceTable` might result negative value which leads your code dependes on this will be pointless. (syscall hook is not used lately so this is not a good example but you know the drill)
 
-### You have to change the entrypoint of your driver
 
-kdmapper will call your driver entry manually, and it requires you to change your entrypoint name from default to yours.
-
-if you are using cmake with FindWDK, add this line at the bottom of your CMakeLists.txt
-
-```
-set_target_properties(${YOUR_TARGET_NAME} PROPERTIES LINK_FLAGS "/ENTRY:DriverEntry")
-```
-
-If you're using Visual Studio, go to project settings of kernel driver and configure the entry point.
-
-- Configuration Properties
-  - Linker
-    - All Options
-      - ✅ Entry Point -> DriverEntry
-
-It initially should be GsDriverEntry. To let kdmapper call your custom driver entry point, **u need to rename it to DriverEntry**.
-
-![custom_entry_point](custom_entry_point.png)
-_Entry Point setting_
-
+## Map it!
 Once you build it with the custom entry point setting, you can make kdmapper do its magic by drag and drop the .sys file onto kdmapper binary. (unless you want to use options)
 
 > Driver signing enforcement doesn't have to be disabled in this way but make sure no anti cheats or anti virus is running in your vm.
